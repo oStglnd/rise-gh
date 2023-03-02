@@ -36,7 +36,6 @@ names = [
     'TA02_GT401_GM401'
 ]
 
-
 data = {}
 for cat in data_cat:
     file = data_path + cat + '.csv'
@@ -55,8 +54,6 @@ dates = dataset.Timestamps.apply(
     lambda date: pd.to_datetime(date, unit='s')
 ).rename('date')
 
-
-
 data = pd.DataFrame(
     index=dates,
     data=data
@@ -68,7 +65,7 @@ data = data.reindex(
     axis=1
 )
 
-# REMOVE NANS (same as for CLIMATE data
+# REMOVE NANS
 drop_dates = [
     '2022-12-12',
     '2022-12-21',

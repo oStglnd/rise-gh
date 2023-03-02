@@ -69,7 +69,7 @@ data = data.reindex(
     axis=1
 )
 
-# REMOVE NANS (same as for CLIMATE data
+# REMOVE NANS
 drop_dates = [
     '2022-12-12',
     '2022-12-21',

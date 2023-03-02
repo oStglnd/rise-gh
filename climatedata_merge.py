@@ -19,23 +19,6 @@ data.index = pd.to_datetime(data.index.values)
 weatherdata = pd.read_csv(data_path + 'climate_smhi.csv', index_col=0)
 weatherdata.index = pd.to_datetime(weatherdata.index.values)
 
-# # remove NaN values from sensor data, primarily 24/12-28/12
-# data = data.dropna(how='any')
-drop_dates = [
-    '2022-12-12',
-    '2022-12-21',
-    '2022-12-24',
-    '2022-12-25',
-    '2022-12-26',
-    '2022-12-27',
-    '2022-12-28',
-    '2023-01-27',
-    '2023-02-13',
-]
-data['date'] = data.index
-data = data[data.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
-del data['date']
-
 # add SMHi data to sensors data
 data['temperatures', 'SMHI'] = weatherdata.temp
 data['temperatures', 'SMHI_dewp'] = weatherdata.temp_dewpoint
