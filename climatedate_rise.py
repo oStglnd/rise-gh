@@ -1,41 +1,26 @@
 
 import os
 import pandas as pd
+import json
 
 # path for RISE data
 home_path = os.getcwd()
 data_path = home_path + '\\data\\sensors\\'
 save_path = home_path + '\\data\\climate_sensors_v2.csv'
 
+# get data specs
+specs = json.load(open('misc\\specs.json'))
+names = specs['control']
+drop_dates = specs['dates']
+
 # data categories
 data_cat = [
    'humidity',
    'temperatures',
    'pressure',
-] 
-
-names = [
-    'DC_GP101',
-    'DC_GT101_GM101',
-    'DC_GT102_GM102',
-    'DC_GT103_GM103',
-    'DC_GT104_GM104',
-    'DC_GT301_damped',
-    'DC_GT301_outdoor',
-    'DC_GT401_GM401',
-    'FF01_GP101',
-    'FF02_GP101',
-    'TA01_GP101',
-    'TA01_GP102',
-    'TA01_GP103',
-    'TA01_GP401',
-    'TA01_GT10X_GM10X',
-    'TA01_GT401_GM401',
-    'TA02_GP101',
-    'TA02_GP401',
-    'TA02_GT401_GM401'
 ]
 
+# iterate over data categories, add to dict, using 2-level MultiIndex
 data = {}
 for cat in data_cat:
     file = data_path + cat + '.csv'
@@ -54,29 +39,20 @@ dates = dataset.Timestamps.apply(
     lambda date: pd.to_datetime(date, unit='s')
 ).rename('date')
 
+# create dataFrame w. dict and dates as index
 data = pd.DataFrame(
     index=dates,
     data=data
 )
 
+# SORT columns in data 
 data = data.reindex(
     sorted(data.columns,
-            key=lambda c: c[0]),
+           key=lambda c: c[0]),
     axis=1
 )
 
 # REMOVE NANS
-drop_dates = [
-    '2022-12-12',
-    '2022-12-21',
-    '2022-12-24',
-    '2022-12-25',
-    '2022-12-26',
-    '2022-12-27',
-    '2022-12-28',
-    '2023-01-27',
-    '2023-02-13',
-]
 data['date'] = data.index
 data = data[data.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
 del data['date']
