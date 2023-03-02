@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # define paths
-home_path = os.getcwd()
+home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\climate_merged.csv'
 plot_path = home_path + '\\plots\\climate\\'
 

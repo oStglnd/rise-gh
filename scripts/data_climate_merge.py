@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 # define data path
-home_path = os.getcwd()
+home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\'
 save_path = home_path + '\\data\\climate_merged.csv'
 

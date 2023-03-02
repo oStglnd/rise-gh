@@ -4,7 +4,7 @@ import pandas as pd
 import json
 
 # path for RISE data
-home_path = os.getcwd()
+home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\sensors\\'
 save_path = home_path + '\\data\\control_v2.csv'
 

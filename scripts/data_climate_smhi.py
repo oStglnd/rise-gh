@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 # path for SMHI data
-home_path = os.getcwd()
+home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\SMHI\\'
 save_path = home_path + '\\data\\climate_smhi.csv'
 
