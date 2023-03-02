@@ -9,7 +9,7 @@ data_path = home_path + '\\data\\sensors\\'
 save_path = home_path + '\\data\\control_v2.csv'
 
 # get data specs
-specs = json.load(open('misc\\specs.json'))
+specs = json.loads(json.load(open(home_path + '\\misc\\specs.json')))
 names = specs['control']
 drop_dates = specs['dates']
 
