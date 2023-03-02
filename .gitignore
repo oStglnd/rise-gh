@@ -1,3 +1,5 @@
-data/
+data/sensors
+data/OLD
+data/*.csv
 plots/
-misc/specs.json
+#misc/specs.json
