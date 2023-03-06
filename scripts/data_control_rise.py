@@ -57,4 +57,4 @@ data['date'] = data.index
 data = data[data.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
 del data['date']
 
-# data.to_csv(save_path)
+data.to_csv(save_path)
