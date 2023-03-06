@@ -6,7 +6,7 @@ import json
 # path for RISE data
 home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\sensors\\'
-save_path = home_path + '\\data\\control.csv'
+save_path = home_path + '\\data\\climate_sensors_v2.csv'
 
 # get data specs
 specs = json.loads(json.load(open(home_path + '\\misc\\specs.json')))
@@ -15,9 +15,9 @@ drop_dates = specs['dates']
 
 # data categories
 data_cat = [
-   'flow',
-   'state',
-   'setpoints'
+   'humidity',
+   'temperatures',
+   'pressure',
 ]
 
 # iterate over data categories, add to dict, using 2-level MultiIndex
@@ -33,11 +33,11 @@ for cat in data_cat:
         
         for dtype in dtypes:
             typ = dtype.split('__')[-1]
-            data[(cat, name, typ)] = dataset[dtype].values
+            data[(cat, name)] = dataset[dtype].values
 
 dates = dataset.Timestamps.apply(
     lambda date: pd.to_datetime(date, unit='s')
-)
+).rename('date')
 
 # create dataFrame w. dict and dates as index
 data = pd.DataFrame(
@@ -57,4 +57,4 @@ data['date'] = data.index
 data = data[data.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
 del data['date']
 
-# data.to_csv(save_path)
+data.to_csv(save_path)
