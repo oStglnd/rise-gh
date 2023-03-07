@@ -115,6 +115,24 @@ plot_cats = [
         'palette':'mako',
         'alpha':1.0,
         'fname':'ghavg_temp_{}.png'.format(plot_suffix)
+    },
+    {
+        'title':'Pressure - Setpoint, {}'.format(plot_unit),
+        'type':['pressure', 'setpoints'],
+        'filter':'DC_GP101',
+        'units':'Pa', 
+        'palette':'viridis_r',
+        'alpha':0.9,
+        'fname':'pa_setp_{}.png'.format(plot_suffix)
+    },
+    {
+        'title':'Temperature - Setpoint, {}'.format(plot_unit),
+        'type':['temperatures', 'setpoints'],
+        'filter':'TA01_GT10X_GM10X',
+        'units':'$^\circ$C', 
+        'palette':'Oranges',
+        'alpha':1.0,
+        'fname':'temp_setp_{}.png'.format(plot_suffix)
     }
 ]
 
