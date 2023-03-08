@@ -44,5 +44,35 @@ data = data.reindex(
     axis=1
 )
 
+# add multiIndex for index col for better grouping
+# create multiIndex f. dates w.r.t. month, day, hour
+data['date'] = data.index
+data.index = pd.MultiIndex.from_tuples(
+    data.date.apply(
+        lambda d: (d.month, d.day, d.hour, d)
+    )
+)
+del data['date']
+
+# set proper names f. index
+data.index.set_names(
+    names=[
+        'month',
+        'day',
+        'hour',
+        'date'
+    ], 
+    inplace=True
+)
+
+# set proper names f. columns
+data.columns.set_names(
+    names=[
+        'category',
+        'sensor_ID'
+    ],
+    inplace=True
+)
+
 # save merged data
 data.to_csv(save_path)
