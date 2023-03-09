@@ -32,6 +32,16 @@ Training an autoencoder with identical architecture, i.e. 128-64-Z-64-128, we ob
 
 ## Denoising humidity measurements
 
+There is a periodical noise component to the humidity measurements in the GH, due to a humidifying system being activated something like every $5$ minutes. In order to accurately assess the effect of other variables on indoors humidity, we would like to filter out the effect of the humidifying system on the measurements.
+
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humidity_2d.png?raw=true width="500" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humidity_1d.png?raw=true width="500" title="reconstruction">
+</p>
+
+### Moving average
+
+Since we know that the humidifier is activated every $5$ minutes, we might attempt to use a moving average. First, we consider the sensor average for each timestep, i.e. TA01_GT10X_GM10X. Second, since we have $2$ measurements every minute, we consider the $10$-step rolling averasge. The results are plotted below for a $6$ hour period.:
+
+<p align="center">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/smooth_humidity_6h.png?raw=true width="500" title="reconstruction">
 </p>
