@@ -13,6 +13,6 @@ We can deal with setpoints anomalies manually. However, there are other outliers
 Using an Autoencoder with convolutional layers, we can attempt to reconstruct segments of the time series. With sufficient confidence in the model's ability to properly reconstruct segments of the series from a latent space, we can use the difference in real and reconstructed values to flag anomalies. For the first segment of the temperature series (whitened and removed temperature setpoints effect), we get the following reconstruction using a 120-60-Z-60-120 1D-conv AE:
 
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/reconstruction.png?raw=true width="500" title="setpoint">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/reconstructed.png?raw=true width="500" title="reconstruction">
 </p>
 
