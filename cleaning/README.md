@@ -26,6 +26,6 @@ The reconstructed temperature segments look pretty good and there are no segment
 Training an autoencoder with identical architecture, i.e. 128-64-Z-64-128, we obtain a similar result for the pressure measurements, where the data can be reconstructed well when trained on data from December and January, and then tested on data in February. The first and last segment of the pressure data are plotted below:
 
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/pressure_reconstructed_1.png?raw=true width="300" title="reconstruction">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/pressure_reconstructed_2.png?raw=true width="300" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/press_reconstructed_1.png?raw=true width="300" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/press_reconstructed_2.png?raw=true width="300" title="reconstruction">
 </p>
