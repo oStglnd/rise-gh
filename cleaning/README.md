@@ -56,7 +56,7 @@ We can also attempt to filter out the oscillations using the FFT algorithm. This
 
 ### Smoothed, normalized measurements
 
-Normalizing the humidity measurements and applying the smoothing to the sensors avgs., we can see the relationships between DC humidity (DC_GT401_GM401), outdoors humidity (SMHI), and the sensors avgs. in the GH (TA01_GT10X_GM10X).
+Normalizing the humidity measurements and applying the smoothing to the sensors avgs., we can see the relationships between DC humidity (DC_GT401_GM401) and the sensors avgs. in the GH (TA01_GT10X_GM10X), using the 10-step rolling avgs. also for DC humidity.
 
 <p align="center">
   <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/norm_humid_fft_5d.png?raw=true width="400" title="reconstruction">
