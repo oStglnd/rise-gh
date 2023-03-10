@@ -48,7 +48,7 @@ Since we know that the humidifier is activated every $5$ minutes, we might attem
 
 ### FFT
 
-We can also attempt to filter out the oscillations using the FFT algorithm. This achieves a very smooth result
+We can also attempt to filter out the oscillations using the FFT algorithm. This achieves a very smooth result. However, 10-step moving avg. seems more straightforward for smoothing the humidity measurements.
 
 <p align="center">
   <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/fft_humidity_6h.png?raw=true width="500" title="reconstruction">
@@ -56,7 +56,7 @@ We can also attempt to filter out the oscillations using the FFT algorithm. This
 
 ### Smoothed, normalized measurements
 
-Normalizing the humidity measurements and applying the smotohing to the sensors avgs., we can see the relationships between DC humidity (DC_GT401_GM401), outdoors humidity (SMHI), and the sensors avgs. in the GH (TA01_GT10X_GM10X).
+Normalizing the humidity measurements and applying the smoothing to the sensors avgs., we can see the relationships between DC humidity (DC_GT401_GM401), outdoors humidity (SMHI), and the sensors avgs. in the GH (TA01_GT10X_GM10X).
 
 <p align="center">
   <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/norm_humid_fft_5d.png?raw=true width="400" title="reconstruction">
