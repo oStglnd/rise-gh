@@ -43,11 +43,22 @@ There is a periodical noise component to the humidity measurements in the GH, du
 Since we know that the humidifier is activated every $5$ minutes, we might attempt to use a moving average. First, we consider the sensor average for each timestep, i.e. TA01_GT10X_GM10X. Second, since we have $2$ measurements every minute, we consider the $10$-step rolling averasge. The results are plotted below for a $6$ hour period.:
 
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/rolling_humidity_6h.png?raw=true width="500" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/smooth_humidity_6h.png?raw=true width="500" title="reconstruction">
 </p>
 
 ### FFT
 
+We can also attempt to filter out the oscillations using the FFT algorithm. This achieves a very smooth result
+
 <p align="center">
   <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/fft_humidity_6h.png?raw=true width="500" title="reconstruction">
+</p>
+
+### Smoothed, normalized measurements
+
+Normalizing the humidity measurements and applying the smotohing to the sensors avgs., we can see the relationships between DC humidity (DC_GT401_GM401), outdoors humidity (SMHI), and the sensors avgs. in the GH (TA01_GT10X_GM10X).
+
+<p align="center">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/norm_humid_fft_5d.png?raw=true width="300" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/norm_humid_rolling_5d.png?raw=true width="300" title="reconstruction">
 </p>
