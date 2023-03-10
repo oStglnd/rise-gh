@@ -35,7 +35,8 @@ Training an autoencoder with identical architecture, i.e. 128-64-Z-64-128, we ob
 There is a periodical noise component to the humidity measurements in the GH, due to a humidifying system being activated something like every $5$ minutes. In order to accurately assess the effect of other variables on indoors humidity, we would like to filter out the effect of the humidifying system on the measurements.
 
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humidity_1d.png?raw=true width="500" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humidity_1d.png?raw=true width="400" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humid_dc_1d.png?raw=true width="400" title="reconstruction">
 </p>
 
 ### Moving average
