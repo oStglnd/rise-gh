@@ -21,15 +21,6 @@ The reconstructed temperature segments look pretty good and there are no segment
 </p>
 
 
-### Pressure measurements
-
-Training an autoencoder with identical architecture, i.e. 128-64-Z-64-128, we obtain a similar result for the pressure measurements, where the data can be reconstructed well when trained on data from December and January, and then tested on data in February. There seems to be no significant outliers or anomalies in the testing data. The first and last segment of the pressure data are plotted below:
-
-<p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/press_reconstructed_1.png?raw=true width="300" title="reconstruction">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/press_reconstructed_2.png?raw=true width="300" title="reconstruction">
-</p>
-
 ## Denoising humidity measurements
 
 There is a periodical noise component to the humidity measurements in the GH, due to a humidifying system being activated something like every $5$ minutes. In order to accurately assess the effect of other variables on indoors humidity, we would like to filter out the effect of the humidifying system on the measurements.
