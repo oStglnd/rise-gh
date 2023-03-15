@@ -16,8 +16,8 @@ Using an Autoencoder with convolutional layers, we can attempt to reconstruct se
 The reconstructed temperature segments look pretty good and there are no segments in the test data for which the MAE comes close to anything in the training data. No anomalies detected when comparing maximum training MAE to reconstruction MAE for test data. For the first and last segment of the temperature series in February (whitened and removed temperature setpoints effect), we get the following reconstructions using a 120-60-Z-60-120 1D-conv AE:
 
 <p align="center">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_reconstructed_1.png?raw=true width="300" title="reconstruction">
-  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_reconstructed_2.png?raw=true width="300" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_reconstruct_1.png?raw=true width="300" title="reconstruction">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_reconstruct_2.png?raw=true width="300" title="reconstruction">
 </p>
 
 
