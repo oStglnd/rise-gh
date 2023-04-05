@@ -1,11 +1,16 @@
 
 import os
 import pandas as pd
+import json
 
 # define data path
 home_path = os.path.dirname(os.getcwd())
 data_path = home_path + '\\data\\'
 save_path = home_path + '\\data\\data_merged.csv'
+
+# get data specs
+specs = json.loads(json.load(open(home_path + '\\misc\\specs.json')))
+drop_dates = specs['dates']
 
 # get data for climate variables
 data_climate = pd.read_csv(
@@ -46,9 +51,9 @@ data = data.reindex(
 
 # add multiIndex for index col for better grouping
 # create multiIndex f. dates w.r.t. month, day, hour
-data['date'] = data.index
+data[('time', 'date')] = data.index
 data.index = pd.MultiIndex.from_tuples(
-    data.date.apply(
+    data.time. date.apply(
         lambda d: (d.month, d.day, d.hour, d.minute, d.second)
     )
 )
@@ -74,6 +79,8 @@ data.columns.set_names(
     ],
     inplace=True
 )
+
+data = data[data.time.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
 
 # save merged data
 data.to_csv(save_path)

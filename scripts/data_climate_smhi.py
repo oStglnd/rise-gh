@@ -66,30 +66,49 @@ dates = pd.date_range(
 data = data.ffill()
 
 # remove date from data
-del data['date']
+data.set_index('date', drop=True, inplace=True)
+#del data['date']
 
 # new DF w. expanded index
 dataExpanded = pd.DataFrame(index=dates)
 
-# define x ranges for spline
-xRange = np.arange(len(data))
-xRangeExpanded = np.linspace(0, len(data), len(dataExpanded))
+# get week values
+dataExpanded['week'] = dataExpanded.index.get_level_values(0).isocalendar().week
+data['week'] = data.index.get_level_values(0).isocalendar().week
+
 
 # iterate over cols
 for col in data.columns:
-    # calculate cubic spline and apply to expanded x vals
-    spline = CubicSpline(xRange, data[col].values)
-    colExpanded = spline(xRangeExpanded)
     
-    # clip values in expanded col
-    colExpanded = np.clip(
-        a=colExpanded,
-        a_min=data[col].min(),
-        a_max=data[col].max()
-    )
+    for week in data.week.unique():
+        
+        # get subset and size of expanded subset
+        subset = data[data.week==week][col].copy()
+        
+        # get index for expanded data
+        idxsExpanded = dataExpanded[dataExpanded.week==week].index
+        
+        # get xranges
+        xRange = np.arange(len(subset))
+        xRangeExpanded = np.linspace(0, len(subset), len(idxsExpanded))
     
-    # import to expanded DF
-    dataExpanded[col] = colExpanded
+        # calculate cubic spline and apply to expanded x vals
+        spline = CubicSpline(xRange, subset.values)
+        colExpanded = spline(xRangeExpanded)
+        
+        # clip values in expanded col
+        colExpanded = np.clip(
+            a=colExpanded,
+            a_min=subset.min(),
+            a_max=subset.max()
+        )
+        
+        # import to expanded DF
+        dataExpanded.loc[idxsExpanded, col] = colExpanded
+
+    # shift interpolated series ONE HOUR
+    dataExpanded[col] = dataExpanded[col].shift(60).bfill()
+
 
 ### calculate wind distributions
 # Convert wind direction to radians.
