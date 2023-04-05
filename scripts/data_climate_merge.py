@@ -20,18 +20,18 @@ weatherdata = pd.read_csv(data_path + 'climate_smhi.csv', index_col=0)
 weatherdata.index = pd.to_datetime(weatherdata.index.values)
 
 # add SMHi data to sensors data
-data['temperatures', 'SMHI'] = weatherdata.temp
-data['temperatures', 'SMHI_dewp'] = weatherdata.temp_dewpoint
-data['pressure', 'SMHI'] = weatherdata.pressure
-data['humidity', 'SMHI'] = weatherdata.humidity
-data['sun', 'SMHI_vol'] = weatherdata.sun_vol
-data['sun', 'SMHI_gsi'] = weatherdata.sun_gsi
-data['wind', 'SMHI_speed'] = weatherdata.wind_speed
-data['wind', 'SMHI_dir'] = weatherdata.wind_dir
-
-# "FILL OUT" hourly SMHI data on half-min-freq by interpolating
-# using forward fill
-data = data.ffill()
+# data['temperatures', 'SMHI'] = weatherdata.temp
+# data['temperatures', 'SMHI_dewp'] = weatherdata.temp_dewpoint
+# data['pressure', 'SMHI'] = weatherdata.pressure
+# data['humidity', 'SMHI'] = weatherdata.humidity
+data['sun', 'vol'] = weatherdata.sun_vol
+data['sun', 'gsi'] = weatherdata.sun_gsi
+data['wind', 'speed'] = weatherdata.wind_speed
+data['wind', 'dir'] = weatherdata.wind_dir
+data['wind', 'Wx'] = weatherdata.wind_Wx
+data['wind', 'Wy'] = weatherdata.wind_Wy
+data['time', 'doy'] = weatherdata.time_doy
+data['time', 'mod'] = weatherdata.time_mod
 
 # RE-sort columns by primary key
 data = data.reindex(

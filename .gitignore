@@ -1,5 +1,6 @@
 data/sensors
 data/OLD
+data/SMHI
 data/*.csv
 plotting/plots/
 #misc/specs.json

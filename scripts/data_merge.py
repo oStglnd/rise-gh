@@ -49,10 +49,9 @@ data = data.reindex(
 data['date'] = data.index
 data.index = pd.MultiIndex.from_tuples(
     data.date.apply(
-        lambda d: (d.month, d.day, d.hour, d)
+        lambda d: (d.month, d.day, d.hour, d.minute, d.second)
     )
 )
-del data['date']
 
 # set proper names f. index
 data.index.set_names(
@@ -60,7 +59,9 @@ data.index.set_names(
         'month',
         'day',
         'hour',
-        'date'
+        'minute',
+        'second'
+        # 'date'
     ], 
     inplace=True
 )
