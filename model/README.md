@@ -1,5 +1,33 @@
 # Models
 
+## Notes on temperature modelling
+
+ - Looking a short-term normalized series, it seems as if though GH temperature is heavily influenced by outdoors temperature, sun GSI & volume, and the DC temp - as well as the air flow when flow is not zero/low variance (i.e. constant-ish).
+
+ - W.r.t. size of GH and avg. size of flows, should be reasonable to consider temperature some 10 mins into the future. The QUESTION is how to properly estimate effects w.r.t. normalizing series. Perhaps something like
+
+	- sequence-specific normalization? I.e. a sort of batch-normalization PRE training.
+	- SEPARATE sequences based on some criterion like GSI > 0 or variance of flow is low. 
+
+	- Use relative differences in explanatory variables to predict relative change in GH temp? 
+	- Also try using absolute quantitites to predict absolute quantity.
+	- Probs need to include "absolute" temperature anyway in order to correctly predict effect.
+	- As well as DIFFERENCE between absolute temp in GH and absolute temp in DC, as well as outside. 
+
+## Notes on data preprocessing
+
+ - Due to changes in the *temperatures* setpoint, looking mainly at "corrected" temperature series where difference in setpoint has been account for, e.g. looking at the difference in temperature w.r.t. the "current" setpoint.
+
+ - *Flow* variable for fan into GH has some seemingly erroneous values. Series has been clipped to only allow for "minimum" values at some 1700-1800 which seems to be "default" value when fan is turned off or turned down.
+
+ - *DC temperature* is highly volatile and fluctuating in the short term. Hence, possibly using FFT-smoothed series instead.
+
+ - For SMHI variables, used interpolation for create smooth series over minutes instead of only hourly measurements.
+
+ - 
+
+
+
 ## PCA projections
 
 On colder days, data is well separated in lower-dimensional subspace w.r.t. outdoors (damped) temperature and airflow volume from DC.
