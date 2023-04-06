@@ -9,7 +9,7 @@ save_path = home_path + '\\data\\climate_merged.csv'
 
 # get sensor data
 data = pd.read_csv(
-    data_path + 'climate_sensors.csv',
+    data_path + 'climate.csv',
     header=[0, 1],
     index_col=0
 )
