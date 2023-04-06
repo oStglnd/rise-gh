@@ -2,5 +2,7 @@ data/sensors
 data/OLD
 data/SMHI/*
 data/*.csv
+scripts/old
+model/old
 plotting/plots/
 #misc/specs.json
