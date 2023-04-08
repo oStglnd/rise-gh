@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 import json
+import datetime
 
 from get_data import getData
 
@@ -43,6 +44,9 @@ for cat in catDict:
         names=specs[cat],
         drop_dates=drop_dates
     )
+
+    indxNew = dataNew.index + datetime.timedelta(0,1)
+    dataNew.index = indxNew.strftime('%m/%d/%Y %I:%M:%S')
 
     # concatenate files and save as csv
     data = pd.concat((data, dataNew))
