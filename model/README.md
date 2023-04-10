@@ -1,6 +1,23 @@
 # Models
 
-## Notes on temperature modelling
+Tested LSTM w. Convolutional embeddings and BatchNorm for both temperature and humidity. Seems to work very, very well. Correlation 0.98-0.999 for predictions and actual values. Should be enough to build environment.
+
+	- Test also LSTM with Bidrectional layers and perhaps other improvements. Better architecture?
+	- Models even seem to be able to correctly handle low-flow periods.
+	- Test also GNN! That is, see if possible to predict temp and humid "simultaneously".
+	- Build GYM! For RL agent. Simple agent.
+
+<p align="center">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humid_preds_10min.png?raw=true width="300" title="Humidity, preds">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humid_error_dist.png?raw=true width="300" title="Humidity, errors">
+</p>
+
+<p align="center">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_preds_10min.png?raw=true width="300" title="Temp, preds">
+  <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/temp_error_dist.png?raw=true width="300" title="Temp, errors">
+</p>
+
+## Notes on temperature modelling (OLD)
 
  - Looking a short-term normalized series, it seems as if though GH temperature is heavily influenced by outdoors temperature, sun GSI & volume, and the DC temp - as well as the air flow when flow is not zero/low variance (i.e. constant-ish).
 
