@@ -128,5 +128,13 @@ dataExpanded['time_mod'] = np.sin(
         * (np.pi / (24 * 60))
 )
 
+# save raw GSI and VOL
+dataExpanded['sun_gsi_raw'] = data['sun_gsi']
+dataExpanded['sun_vol_raw'] = data['sun_vol']
+
+# fill forward
+dataExpanded['sun_gsi_raw'] = dataExpanded['sun_gsi_raw'].ffill()
+dataExpanded['sun_vol_raw'] = dataExpanded['sun_vol_raw'].ffill()
+    
 # save data
 dataExpanded.to_csv(save_path)

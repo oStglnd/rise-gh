@@ -44,9 +44,9 @@ for cat in catDict:
         names=specs[cat],
         drop_dates=drop_dates
     )
-
+    
     indxNew = dataNew.index + datetime.timedelta(0,1)
-    dataNew.index = indxNew.strftime('%m/%d/%Y %I:%M:%S')
+    dataNew.index = indxNew.strftime('%Y-%m-%d %H:%M:%S')#.ceil('s')
 
     # concatenate files and save as csv
     data = pd.concat((data, dataNew))
