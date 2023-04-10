@@ -4,5 +4,6 @@ data/SMHI/*
 data/*.csv
 scripts/old
 model/old
+model/saved
 plotting/plots/
 #misc/specs.json

@@ -4,9 +4,10 @@ Tested LSTM w. Convolutional embeddings and BatchNorm for both temperature and h
 
 	- Test also LSTM with Bidrectional layers and perhaps other improvements. Better architecture?
 	- Models even seem to be able to correctly handle low-flow periods.
-	- Is it actually necessary to test GNN? Considering only temperature and humidity, no clear inductive biases to model, almost all features "point directly" to variable 2 be predicted.
-	- Seems "choice" of data for training is very important. Perhaps more feature engineering necessary? Or just more data.
-	- Build GYM! For RL agent. Simple agent.
+	- Is it actually necessary to test GNN? Considering only temperature and humidity, no clear inductive biases to model, almost all features "point directly" to variable 2 be predicted. Not really.
+	- (1) Seems "choice" of data for training is very important. Perhaps more feature engineering necessary? Or just more data. For example exploding validation loss and test data errors f. CNN model. Due to certain data points? Do another "sweep" of dataset...
+	- (2) Read up on LSTMs & Attention, implement LSTM network "correctly". 
+	- (3) Build GYM! For RL agent. Simple agent.
 
 <p align="center">
   <img src=https://github.com/oStglnd/rise-gh/blob/main/misc/plots/humid_preds_10min.png?raw=true width="300" title="Humidity, preds">
