@@ -13,6 +13,7 @@ data_path = home_path + '\\data\\sensors\\'
 # get data specs
 specs = json.loads(json.load(open(home_path + '\\misc\\specs.json')))
 drop_dates = specs['dates']
+drop_hours = specs['hours']
 
 # data cat dict
 catDict = {
@@ -34,7 +35,8 @@ for cat in catDict:
         path=data_path+'dec-feb\\',
         cats=catDict[cat],
         names=specs[cat],
-        drop_dates=drop_dates
+        drop_dates=drop_dates,
+        drop_hours=drop_hours
     )
     
     # get new data
@@ -42,11 +44,12 @@ for cat in catDict:
         path=data_path+'feb-mar\\',
         cats=catDict[cat],
         names=specs[cat],
-        drop_dates=drop_dates
+        drop_dates=drop_dates,
+        drop_hours=drop_hours
     )
     
     indxNew = dataNew.index + datetime.timedelta(0,1)
-    dataNew.index = indxNew.strftime('%Y-%m-%d %H:%M:%S')#.ceil('s')
+    dataNew.index = indxNew.strftime('%Y-%m-%d %H:%M:%S')#.floor('s')
 
     # concatenate files and save as csv
     data = pd.concat((data, dataNew))

@@ -2,10 +2,9 @@
 
 Tested LSTM w. Convolutional embeddings and BatchNorm for both temperature and humidity. Seems to work very, very well. Correlation 0.98-0.999 for predictions and actual values. Should be enough to build environment.
 
-	- Test also LSTM with Bidrectional layers and perhaps other improvements. Better architecture?
-	- Models even seem to be able to correctly handle low-flow periods.
-	- Is it actually necessary to test GNN? Considering only temperature and humidity, no clear inductive biases to model, almost all features "point directly" to variable 2 be predicted. Not really.
-	- (1) Seems "choice" of data for training is very important. Perhaps more feature engineering necessary? Or just more data. For example exploding validation loss and test data errors f. CNN model. Due to certain data points? Do another "sweep" of dataset...
+	- Test also LSTM with ATTENTION layer.
+	- (X) Seems "choice" of data for training is very important. Perhaps more feature engineering necessary? Or just more data. For example exploding validation loss and test data errors f. CNN model. Due to certain data points? Do another "sweep" of dataset...
+	- (1) Create GMM models for flow and DC temp
 	- (2) Read up on LSTMs & Attention, implement LSTM network "correctly". 
 	- (3) Build GYM! For RL agent. Simple agent.
 

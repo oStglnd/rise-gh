@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-def getData(path, cats, names, drop_dates):
+def getData(path, cats, names, drop_dates, drop_hours):
     data = {}
     for cat in cats:
         file = path + cat + '.csv'
@@ -35,7 +35,12 @@ def getData(path, cats, names, drop_dates):
 
     # REMOVE NANS
     data['date'] = data.index
-    data = data[data.date.apply(lambda d: d.date().isoformat() not in drop_dates)]
+    data = data[data.date.apply(
+        lambda d: d.date().isoformat() not in drop_dates
+    )]
+    data = data[data.date.apply(
+        lambda d: d.strftime('%Y-%m-%d %H') not in drop_hours
+    )]
     del data['date']
     
     return data
