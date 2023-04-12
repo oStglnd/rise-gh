@@ -2,7 +2,7 @@
 
 Tested LSTM w. Convolutional embeddings and BatchNorm for both temperature and humidity. Seems to work very, very well. Correlation 0.98-0.999 for predictions and actual values. Should be enough to build environment.
 
-	- Test also LSTM with ATTENTION layer.
+	- Test also LSTM with ATTENTION layer, Seq2seq (i.e. RepeatVector and TimeDistributed)
 	- (X) Seems "choice" of data for training is very important. Perhaps more feature engineering necessary? Or just more data. For example exploding validation loss and test data errors f. CNN model. Due to certain data points? Do another "sweep" of dataset...
 	- (1) Create GMM models for flow and DC temp
 	- (2) Read up on LSTMs & Attention, implement LSTM network "correctly". 
