@@ -95,16 +95,24 @@ for col in data.columns:
         # calculate cubic spline and apply to expanded x vals
         spline = CubicSpline(xRange, subset.values)
         colExpanded = spline(xRangeExpanded)
+        colExpandedDeriv = spline.derivative()(xRangeExpanded)
         
-        # clip values in expanded col
+        # clip values in expanded cols
         colExpanded = np.clip(
             a=colExpanded,
             a_min=subset.min(),
             a_max=subset.max()
         )
         
+        # colExpandedDeriv = np.clip(
+        #     a=colExpandedDeriv,
+        #     # a_min=subset.min(),
+        #     # a_max=subset.max()
+        # )
+        
         # import to expanded DF
         dataExpanded.loc[idxsExpanded, col] = colExpanded
+        dataExpanded.loc[idxsExpanded, col + '_deriv'] = colExpandedDeriv
 
     # shift interpolated series ONE HOUR
     dataExpanded[col] = dataExpanded[col].shift(60).bfill()
@@ -121,6 +129,13 @@ dataExpanded['wind_Wy'] = dataExpanded['wind_speed'].values * np.sin(windRad)
 # create TIME data, i.e. SIN of DAYS per YEAR and MINUTES per DAY
 dataExpanded['time_doy'] = np.sin(
     dataExpanded.index.get_level_values(0).dayofyear * (np.pi / 365)
+)
+
+dataExpanded['time_moy'] = np.sin(
+    dataExpanded.index.get_level_values(0).month * (np.pi / 12)
+)
+dataExpanded['time_hod'] = np.sin(
+        dataExpanded.index.get_level_values(0).hour * (np.pi / 24)
 )
 dataExpanded['time_mod'] = np.sin(
     (dataExpanded.index.get_level_values(0).hour * 60 \

@@ -25,15 +25,19 @@ weatherdata.index = pd.to_datetime(weatherdata.index.values)
 # data['pressure', 'SMHI'] = weatherdata.pressure
 # data['humidity', 'SMHI'] = weatherdata.humidity
 data['sun', 'vol'] = weatherdata.sun_vol
+data['sun', 'vol_deriv'] = weatherdata.sun_vol_deriv
 data['sun', 'vol_raw'] = weatherdata.sun_vol_raw
 data['sun', 'gsi'] = weatherdata.sun_gsi
+data['sun', 'gsi_deriv'] = weatherdata.sun_gsi_deriv
 data['sun', 'gsi_raw'] = weatherdata.sun_gsi_raw
 data['wind', 'speed'] = weatherdata.wind_speed
 data['wind', 'dir'] = weatherdata.wind_dir
 data['wind', 'Wx'] = weatherdata.wind_Wx
 data['wind', 'Wy'] = weatherdata.wind_Wy
-data['time', 'doy'] = weatherdata.time_doy
-data['time', 'mod'] = weatherdata.time_mod
+data['time', 'dayofyear'] = weatherdata.time_doy
+data['time', 'monthofyear'] = weatherdata.time_moy
+data['time', 'minofday'] = weatherdata.time_mod
+data['time', 'hourofday'] = weatherdata.time_hod
 
 # RE-sort columns by primary key
 data = data.reindex(
