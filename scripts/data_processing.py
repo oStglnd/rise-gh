@@ -17,18 +17,31 @@ data = pd.read_csv(
 # define vars
 x_vars = [
     ('flow', 'TA01_GP101'),
-    ('flow', 'FF01_GP101'),
+    ('state', 'TA01_output'),
+    ('temperatures', 'DC_GT101_GM101'),
+    ('temperatures', 'DC_GT102_GM102'),
+    ('temperatures', 'DC_GT103_GM103'),
+    ('temperatures', 'DC_GT104_GM104'),
     ('temperatures', 'DC_GT401_GM401'),
-    ('temperatures', 'TA01_GT10X_GM10X'),
+    ('temperatures', 'TA01_GT401_GM401'),
+    ('temperatures', 'TA02_GT401_GM401'),
     ('temperatures', 'DC_GT301_damped'),
     ('temperatures', 'DC_GT301_outdoor'),
-    ('setpoints', 'TA01_GT10X_GM10X'),
-    ('humidity', 'TA01_GT10X_GM10X'),
+    ('humidity', 'DC_GT101_GM101'),
+    ('humidity', 'DC_GT102_GM102'),
+    ('humidity', 'DC_GT103_GM103'),
+    ('humidity', 'DC_GT104_GM104'),
     ('humidity', 'DC_GT401_GM401'),
+    ('setpoints', 'TA01_GT10X_GM10X'),
     ('sun', 'gsi'),
+    ('sun', 'gsi_deriv'),
     ('sun', 'vol'),
-    ('time', 'mod'),
-    ('time', 'doy')
+    ('sun', 'vol_deriv'),
+    ('time', 'dayofyear'),
+    ('time', 'monthofyear'),
+    ('time', 'minofday'),
+    ('time', 'minofday_deriv'),
+    ('time', 'hourofday')
 ]
 
 # filter columns to keep only vars
@@ -40,59 +53,132 @@ data = data.dropna(how='any')
 # remove erroneous setpoints data
 data = data[data.setpoints.TA01_GT10X_GM10X != 0.0]
 
-# Transform setpoints variable to instead account for difference w.r.t 20 deg C
-data[('temperatures', 'setpoint_diff')] = data.setpoints.TA01_GT10X_GM10X - 20.0
-del data[('setpoints', 'TA01_GT10X_GM10X')]
+## GH TEMPERATURE
+# create "better" estimate of temperature var, w. proper avg.
+data[('temperatures', 'TA01_GT10X_GM10X')] = data.temperatures[[
+    # ('DC_GT102_GM101'),
+    ('DC_GT102_GM102'), 
+    ('DC_GT103_GM103'), 
+    ('DC_GT104_GM104')
+]].values.mean(axis=1)
 
-# remove "OUTLIERS" from DC-TEMP
-data[('temperatures', 'DC_GT401_GM401_roll')] = data.temperatures.DC_GT401_GM401.rolling(window=240, center=False).mean()
-data[('temperatures', 'DC_diff')] = np.abs(data.temperatures.DC_GT401_GM401 - data.temperatures.DC_GT401_GM401_roll)
-data.loc[data.temperatures.DC_diff > 2, ('temperatures', 'DC_GT401_GM401')] = data.temperatures.DC_GT401_GM401_roll
+## DC TEMPERATURE
+# min-max scale [btween 0 and 1]
+col = ('temperatures', 'DC_GT401_GM401')
+col2 = ('temperatures', 'DC_GT401_GM401_scaled')
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
-# remove "OUTLIERS" from DC-FLOW
-data[('flow', 'TA01_GP101')] = data.flow.TA01_GP101.apply(lambda val: max(1800, val))
+# scale by fan output
+data[col2] = data[col] * data[('state', 'TA01_output')] / data[('state', 'TA01_output')].min()
 
-# make flow OUT negative
-data[('flow', 'FF01_GP101')] = - data.flow.FF01_GP101
+## OUTSIDE TEMP
+# min-max scale vals
+# set MIN to zero
+col = ('temperatures', 'DC_GT301_damped')
+data[col] = data[col] + abs(data[col].min())
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
-# get FFT-smoothed series
-def fft_smoothing(data, spacing, threshold):
-    fourier = np.fft.rfft(data.values)
-    freqs = np.fft.rfftfreq(
-        n = len(data),
-        d = spacing
-    )
+## GH HUMIDITY
+# create "better" estimate of temperature var, w. proper avg.
+data[('humidity', 'TA01_GT10X_GM10X')] = data.humidity[[
+    # ('DC_GT102_GM101'),
+    ('DC_GT102_GM102'), 
+    ('DC_GT103_GM103'), 
+    ('DC_GT104_GM104')
+]].values.mean(axis=1)
+
+# min-max scale vals
+col = ('humidity', 'TA01_GT10X_GM10X')
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
+
+## GSI
+# min-max scale GSI
+col = ('sun', 'gsi')
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
+
+## GSI DERIV
+### min-max scale GSI deriv
+col = ('sun', 'gsi_deriv')
+data[col] = data[col] + abs(data[col].min())
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
+
+## KALMAN FILTERING
+cols = [
+    (('temperatures', 'TA01_GT10X_GM10X'), 3),
+    (('temperatures', 'DC_GT401_GM401'), 2),
+    (('temperatures', 'DC_GT401_GM401_scaled'), 2),
+    (('temperatures', 'DC_GT301_damped'), 4),
+    (('humidity', 'TA01_GT10X_GM10X'), 3),   
+]
+
+for colSpec in cols:
+    # apply KALMAN filter to temperature measurements
+    col = colSpec[0]
+    varExp = colSpec[-1]
     
-    fourier[freqs > threshold] = 0
-    filtered = np.fft.irfft(fourier)
-    return filtered
+    # get data
+    X = data[col].values
+    n = len(X)
 
-data.loc[:, ('temperatures', 'DC_GT401_GM401_fft')] = fft_smoothing(
-    data=data[('temperatures', 'DC_GT401_GM401')],
-    spacing=1/100,
-    threshold=1
-)
+    # process variance, measurement variance
+    Q = 1e-5
+    R = 0.1**varExp
 
-data.loc[:, ('temperatures', 'TA01_GT10X_GM10X_fft')] = fft_smoothing(
-    data=data[('temperatures', 'TA01_GT10X_GM10X')],
-    spacing=1/10,
-    threshold=1/10
-)
+    xhat=np.zeros(n)      # a posteri estimate of x
+    P=np.zeros(n)         # a posteri error estimate
+    xhatminus=np.zeros(n) # a priori estimate of x
+    Pminus=np.zeros(n)    # a priori error estimate
+    K=np.zeros(n)         # gain or blending factor
 
-data.loc[:, ('humidity', 'DC_GT401_GM401_fft')] = fft_smoothing(
-    data=data[('humidity', 'DC_GT401_GM401')],
-    spacing=1/10,
-    threshold=1/10
-)
+    # intial guesses
+    xhat[0] = X[0]
+    P[0] = X[1]
 
-data[('humidity', 'DC_GT401_GM401_fft')] = data.humidity.DC_GT401_GM401_fft.apply(
-    lambda val: max(0, val)
-)
+    for k in range(1,n):
+        # time update
+        xhatminus[k] = xhat[k-1]
+        Pminus[k] = P[k-1]+Q
 
-### REMOVE "INCOMPLETE" days
-idxs = data.groupby(['month', 'day']).count().flow.TA01_GP101 == 2880
-idxs = idxs[idxs == 1]
-data = data[idxs]
+        # measurement update
+        K[k] = Pminus[k]/( Pminus[k]+R )
+        xhat[k] = xhatminus[k]+K[k]*(X[k]-xhatminus[k])
+        P[k] = (1-K[k])*Pminus[k]
+
+    data[col] = xhat
+
+## PREP DATA
+t_steps = 10   # 10-min predictions
+n_steps = 60   # 60-min backwards look
+
+# Define model variables
+model_vars = [
+    ('temperatures', 'TA01_GT10X_GM10X'),
+    ('temperatures', 'DC_GT401_GM401_scaled'),
+    ('temperatures', 'DC_GT301_damped'),
+    ('humidity', 'TA01_GT10X_GM10X'),
+    ('sun', 'gsi'),
+    ('sun', 'gsi_deriv'),
+    ('time', 'minofday'),
+    ('time', 'minofday_deriv'),
+    ('setpoints', 'TA01_GT10X_GM10X'),
+    ('state', 'TA01_output'),
+    ('temperatures', 'DC_GT401_GM401')
+]
+
+# get data
+envData = data[model_vars].copy()
+
+# filter out incomplete days
+dayData = envData.groupby(['month', 'day']).count().state
+mask = dayData == 2880
+dayData = dayData[mask].dropna()
+idx = dayData.index.values.tolist()
+
+# filter envData by mask
+envData['dayCol'] = envData.index.droplevel(-1).droplevel(-1).droplevel(-1).values
+envData = envData[envData.dayCol.apply(lambda day: day in idx) == True]
+
+del envData['dayCol']
 
 # save data
-data.to_csv(data_path + '\\data_env.csv')
+envData.to_csv(data_path + '\\data_env.csv')

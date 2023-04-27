@@ -1,7 +1,9 @@
 
 import os
+from collections import deque
 import pandas as pd
 import numpy as np
+import tensorflow as tf
 
 class greenhouseEnvironment():
     
@@ -9,6 +11,15 @@ class greenhouseEnvironment():
         # define paths
         home_path = os.path.dirname(os.getcwd())
         data_path = home_path + '\\data\\'
+        model_path = home_path + '\\model\\saved\\temp_model_v5'
+        
+        # set env specs
+        self.t_steps = 10
+        self.n_steps = 60
+        
+        # set action specs
+        self.a_min = 0.0
+        self.a_max = 1.0
         
         # get data
         self.data = pd.read_csv(
@@ -17,6 +28,13 @@ class greenhouseEnvironment():
             index_col=[0, 1, 2, 3, 4]
         )
         
+        # save info on flow outp
+        self.flowMin = self.data.state.TA01_output.min()
+        self.flowMax = self.data.state.TA01_output.max()
+        
+        # get engine model
+        self.model = tf.keras.models.load_model(model_path)
+        
         # segment data into days
         dates = zip(
             self.data.index.get_level_values(0),
@@ -24,9 +42,138 @@ class greenhouseEnvironment():
         )
         self.dates = pd.Series(dates).unique()
         
-        # create epoch-specific subset
-        self.epochData = self.data.loc[self.dates[0][0]].loc[self.dates[0][1]]
+        # create epoch-specific subsets f. states
+        self.stateInternal = None
+        self.stateExternal = None
+        
+        # create change container for flow var and temp
+        self.tempQueue = deque(maxlen=self.t_steps)
+        self.flowQueue = deque(maxlen=self.n_steps)
+        
+        # create container for prev action/flow rate
+        self.action_prev = 0
         
     def reset(self):
         # pick random day
-        date = np.random.choice
+        date = np.random.choice(self.dates)
+        data = self.data.loc[date].copy()
+        
+        # get setpoint vals for reward calc.
+        tempSet = data.pop(('setpoints', 'TA01_GT10X_GM10X')).shift(-self.t_steps).values
+        
+        # get vals for external state
+        tempDC = data.pop(('temperatures', 'DC_GT401_GM401')).shift(-self.t_steps).values
+        time = data.time.copy().shift(-self.t_steps).values
+        del data[('time', 'minofday_deriv')]
+        
+        # get temp values f. GH and crop w.r.t. n_steps
+        tempGH = data.pop(('temperatures', 'TA01_GT10X_GM10X')).values
+        tempGH = tempGH[self.n_steps-self.t_steps:]
+
+        # get scaled flow-temp values f. GH
+        scaledTempDC = data.pop(('temperatures', 'DC_GT401_GM401_scaled')).values
+        
+        # get initial flow state
+        flowDC = data.pop(('state', 'TA01_output')).shift(-self.t_steps).values
+        self.action_prev = flowDC[self.t_steps]
+        
+        # get vals for internal state
+        vals = data.values
+        seqs = []
+        for i in range(len(vals) - self.n_steps):
+            seqs.append(vals[i:i+self.n_steps])
+        seqs = np.stack(seqs)
+        
+        # fill out the temp queue w. 
+        for t in range(self.t_steps):
+            self.tempQueue.append(tempGH[t])
+        
+        # fill out the flow queue w.
+        for n in range(self.n_steps):
+            self.flowQueue(scaledTempDC[n, 0])
+        
+        # remove superfluous temperature, flow data
+        del tempGH, vals, scaledTempDC, flowDC
+        
+        self.stateExternal = iter(zip(
+            tempDC,
+            tempSet,
+            time,
+        ))
+        
+        self.stateInternal = iter(zip(
+            seqs,
+        ))
+        
+        
+        return 0
+        
+    def step(self, action: float):
+        
+        # clip action
+        action = np.clip(action, self.a_min, self.a_max)
+        self.prev_action = action
+        
+        # rescale action from [0, 1] to [flow.min(), flow.max()] to [1, ...]
+        flow = action * (self.flowMax - self.flowMin) + self.flowMin
+        flowScale = flow / self.flowMin
+        
+        # get internal and external states
+        stateExternal = next(self.stateExternal)
+        stateInternal = next(self.stateInternal)
+        
+        # recalculate DC-temp-flow
+        flowNew = stateExternal[0] * flowScale
+        
+        # update flowQueue
+        for _ in range(self.t_steps-1):
+            self.flowQueue.append(flowNew)
+        
+        # get temperature
+        temperature = self.tempQueue.popleft()
+        
+        # get new sequence block
+        seq = np.stack(
+            self.flowQueue,
+            stateInternal
+        )
+        
+        # calculate temp diff for t + t_steps
+        tempDiff = self.model.predict(
+            [seq, temperature], 
+            verbose=False
+        )
+        
+        # update tempQueue w. new future tempVal
+        tempNew = temperature + tempDiff[0][0] / 10
+        self.tempQueue.append(tempNew)
+        
+        # shift flowQueue
+        self.flowQueue.append(flowNew)
+        
+        # calculate reward (current temperature - setpoint)
+        reward = np.abs(temperature - stateExternal[1])
+        
+        # make state
+        state = np.stack([
+            temperature,
+            stateExternal[0],
+            stateExternal[1],
+            self.action_prev,
+            time.T
+        ])
+        
+        '''
+        state = np.array([
+            temperature,
+            temp_setpoint,
+            temp_DC,
+            flow_DC,
+            time,
+            time_deriv
+        ])
+        '''
+        
+        return state, reward
+        
+    

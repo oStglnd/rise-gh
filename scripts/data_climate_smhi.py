@@ -142,7 +142,12 @@ dataExpanded['time_mod'] = np.sin(
      + dataExpanded.index.get_level_values(0).minute) \
         * (np.pi / (24 * 60))
 )
-
+dataExpanded['time_mod_deriv'] = np.cos(
+    (dataExpanded.index.get_level_values(0).hour * 60 \
+     + dataExpanded.index.get_level_values(0).minute) \
+        * (np.pi / (24 * 60))
+)
+    
 # save raw GSI and VOL
 dataExpanded['sun_gsi_raw'] = data['sun_gsi']
 dataExpanded['sun_vol_raw'] = data['sun_vol']
