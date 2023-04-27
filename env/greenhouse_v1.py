@@ -53,6 +53,10 @@ class greenhouseEnvironment():
         # create container for prev action/flow rate
         self.action_prev = 0
         
+        # create container for step and terminal state
+        self.tstep = 0
+        self.terminal = False
+        
     def reset(self):
         # pick random day
         date = np.random.choice(self.dates)
@@ -75,7 +79,7 @@ class greenhouseEnvironment():
         
         # get initial flow state
         flowDC = data.pop(('state', 'TA01_output')).shift(-self.t_steps).values
-        self.action_prev = flowDC[self.t_steps]
+        self.action_prev = (flowDC[self.t_steps] - self.flowMin) / (self.flowMax - self.flowMin)
         
         # get vals for internal state
         vals = data.values
@@ -90,7 +94,7 @@ class greenhouseEnvironment():
         
         # fill out the flow queue w.
         for n in range(self.n_steps):
-            self.flowQueue(scaledTempDC[n, 0])
+            self.flowQueue.append(scaledTempDC[n])
         
         # remove superfluous temperature, flow data
         del tempGH, vals, scaledTempDC, flowDC
@@ -101,18 +105,18 @@ class greenhouseEnvironment():
             time,
         ))
         
-        self.stateInternal = iter(zip(
-            seqs,
-        ))
+        self.stateInternal = iter(seqs)
         
+        # make state
+        state, _, _, _, _ = self.step(self.action_prev)
         
-        return 0
+        return state
         
     def step(self, action: float):
         
         # clip action
         action = np.clip(action, self.a_min, self.a_max)
-        self.prev_action = action
+        self.action_prev = action
         
         # rescale action from [0, 1] to [flow.min(), flow.max()] to [1, ...]
         flow = action * (self.flowMax - self.flowMin) + self.flowMin
@@ -126,21 +130,28 @@ class greenhouseEnvironment():
         flowNew = stateExternal[0] * flowScale
         
         # update flowQueue
-        for _ in range(self.t_steps-1):
-            self.flowQueue.append(flowNew)
+        for i in range(self.t_steps):
+            self.flowQueue[-i] = flowNew
         
         # get temperature
+        # temperature = 20.0
         temperature = self.tempQueue.popleft()
+        # temperature = np.array([self.tempQueue.popleft()])
+        # temperature = np.array([20.0])
+        # temperature = [20.0]
         
         # get new sequence block
-        seq = np.stack(
-            self.flowQueue,
+        seq = np.hstack([
+            np.array(self.flowQueue)[:, np.newaxis],
             stateInternal
-        )
+        ])
         
         # calculate temp diff for t + t_steps
         tempDiff = self.model.predict(
-            [seq, temperature], 
+            [
+                seq[np.newaxis, :].astype('float64'), 
+                np.array([temperature])[np.newaxis, :].astype('float64')
+            ], 
             verbose=False
         )
         
@@ -149,31 +160,26 @@ class greenhouseEnvironment():
         self.tempQueue.append(tempNew)
         
         # shift flowQueue
-        self.flowQueue.append(flowNew)
+        # self.flowQueue.append(flowNew)
         
         # calculate reward (current temperature - setpoint)
         reward = np.abs(temperature - stateExternal[1])
         
         # make state
         state = np.stack([
-            temperature,
-            stateExternal[0],
-            stateExternal[1],
-            self.action_prev,
-            time.T
+            temperature,            # GH temperature
+            stateExternal[0],       # DC temperature
+            stateExternal[1],       # GH temperature setpoint
+            stateExternal[-1][0],   # minute of day
+            stateExternal[-1][1],   # minute of day, derivative
+            self.action_prev,       # previous action, current flow
         ])
         
-        '''
-        state = np.array([
-            temperature,
-            temp_setpoint,
-            temp_DC,
-            flow_DC,
-            time,
-            time_deriv
-        ])
-        '''
+        # update step and terminal
+        self.tstep += 1
+        if self.tstep >= 2880:
+            self.terminal = True
         
-        return state, reward
+        return state, reward, temperature, self.terminal, tempDiff
         
     
