@@ -37,6 +37,8 @@ x_vars = [
     ('sun', 'gsi_deriv'),
     ('sun', 'vol'),
     ('sun', 'vol_deriv'),
+    ('wind', 'Wx'),
+    ('wind', 'Wy'),
     ('time', 'dayofyear'),
     ('time', 'monthofyear'),
     ('time', 'minofday'),
@@ -66,6 +68,7 @@ data[('temperatures', 'TA01_GT10X_GM10X')] = data.temperatures[[
 # min-max scale [btween 0 and 1]
 col = ('temperatures', 'DC_GT401_GM401')
 col2 = ('temperatures', 'DC_GT401_GM401_scaled')
+data[col] = data[col].apply(lambda val: max(val, 30))
 data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
 # scale by fan output
@@ -97,10 +100,20 @@ col = ('sun', 'gsi')
 data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
 ## GSI DERIV
-### min-max scale GSI deriv
+# min-max scale GSI deriv
 col = ('sun', 'gsi_deriv')
 data[col] = data[col] + abs(data[col].min())
 data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
+
+## WIND
+# min-max scale wind vars
+col1 = ('wind', 'Wx')
+col2 = ('wind', 'Wy')
+
+data[col1] = data[col1] + abs(data[col1].min())
+data[col1] = (data[col1] - data[col1].min()) / (data[col1].max() - data[col1].min())
+data[col2] = data[col2] + abs(data[col2].min())
+data[col2] = (data[col2] - data[col2].min()) / (data[col2].max() - data[col2].min())
 
 ## KALMAN FILTERING
 cols = [
@@ -108,7 +121,11 @@ cols = [
     (('temperatures', 'DC_GT401_GM401'), 2),
     (('temperatures', 'DC_GT401_GM401_scaled'), 2),
     (('temperatures', 'DC_GT301_damped'), 4),
-    (('humidity', 'TA01_GT10X_GM10X'), 3),   
+    (('humidity', 'TA01_GT10X_GM10X'), 3),
+    # (('sun', 'gsi_deriv'), 3),
+    (('wind', 'Wx'), 3),
+    (('wind', 'Wy'), 3),
+    
 ]
 
 for colSpec in cols:
@@ -158,6 +175,8 @@ model_vars = [
     ('humidity', 'TA01_GT10X_GM10X'),
     ('sun', 'gsi'),
     ('sun', 'gsi_deriv'),
+    ('wind', 'Wx'),
+    ('wind', 'Wy'),
     ('time', 'minofday'),
     ('time', 'minofday_deriv'),
     ('setpoints', 'TA01_GT10X_GM10X'),

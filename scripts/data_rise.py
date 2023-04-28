@@ -29,29 +29,39 @@ catDict = {
         'power'
     ]}
 
+periods = [
+    'dec-feb',
+    'feb-mar',
+    'mar-apr'
+]
+
 for cat in catDict:
     # get old data
     data = getData(
-        path=data_path+'dec-feb\\',
+        path=data_path+periods[0] + '\\',
         cats=catDict[cat],
         names=specs[cat],
         drop_dates=drop_dates,
         drop_hours=drop_hours
     )
     
-    # get new data
-    dataNew = getData(
-        path=data_path+'feb-mar\\',
-        cats=catDict[cat],
-        names=specs[cat],
-        drop_dates=drop_dates,
-        drop_hours=drop_hours
-    )
-    
-    indxNew = dataNew.index + datetime.timedelta(0,1)
-    dataNew.index = indxNew.strftime('%Y-%m-%d %H:%M:%S')#.floor('s')
+    for period in periods[1:]:
+        # get new data
+        dataNew = getData(
+            path=data_path+period + '\\',
+            cats=catDict[cat],
+            names=specs[cat],
+            drop_dates=drop_dates,
+            drop_hours=drop_hours
+        )
+        
+        indxNew = dataNew.index + datetime.timedelta(0,1)
+        dataNew.index = indxNew.strftime('%Y-%m-%d %H:%M:%S')#.floor('s')
 
-    # concatenate files and save as csv
-    data = pd.concat((data, dataNew))
+        # concatenate files
+        data = pd.concat((data, dataNew))
+    
+    # and save as csv
+    data = data[~data.index.duplicated(keep='first')]
     save_path = home_path + '\\data\\{}.csv'.format(cat)
     data.to_csv(save_path)
