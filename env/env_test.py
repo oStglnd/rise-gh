@@ -20,8 +20,7 @@ action = 0.7
 tstep = 0
 while not terminal:
     
-    state, reward, temp, terminal, tempDiff = env.step(action)
-    
+    state, reward, temp, terminal, tempDiff = env.step(action)    
     rewardList.append(reward)
     tempList.append(temp)
     tempDiffList.append(tempDiff[0][0] / 10)

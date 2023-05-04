@@ -5,21 +5,27 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 
+from misc import kalmanFilter
+
 class greenhouseEnvironment():
     
     def __init__(self):
         # define paths
         home_path = os.path.dirname(os.getcwd())
         data_path = home_path + '\\data\\'
-        model_path = home_path + '\\model\\saved\\temp_model_v5'
+        model_path = home_path + '\\model\\saved\\temp_model_v20'
         
         # set env specs
         self.t_steps = 10
-        self.n_steps = 60
+        self.n_steps = 30
         
         # set action specs
         self.a_min = 0.0
         self.a_max = 1.0
+        
+        # set temp specs
+        self.tempMin = 10.0
+        self.tempMax = 30.0
         
         # get data
         self.data = pd.read_csv(
@@ -56,6 +62,9 @@ class greenhouseEnvironment():
         # create container for step and terminal state
         self.tstep = 0
         self.terminal = False
+        
+        # create kalman filter
+        self.kalman = kalmanFilter()
         
     def reset(self):
         # pick random day
@@ -110,6 +119,9 @@ class greenhouseEnvironment():
         # make state
         state, _, _, _, _ = self.step(self.action_prev)
         
+        # reset kalman
+        self.kalman.reset()
+        
         return state
         
     def step(self, action: float):
@@ -147,16 +159,21 @@ class greenhouseEnvironment():
         ])
         
         # calculate temp diff for t + t_steps
-        tempDiff = self.model.predict(
+        tempNew = self.model.predict(
             [
                 seq[np.newaxis, :].astype('float64'), 
                 np.array([temperature])[np.newaxis, :].astype('float64')
             ], 
             verbose=False
-        )
+        )[0][0]
+        
+        # apply Kalman filter
+        tempNew = self.kalman.update(tempNew)
+        
+        # set net temp within state range
+        tempNew = np.clip(tempNew, self.tempMin, self.tempMax)
         
         # update tempQueue w. new future tempVal
-        tempNew = temperature + tempDiff[0][0] / 10
         self.tempQueue.append(tempNew)
         
         # shift flowQueue
@@ -180,6 +197,6 @@ class greenhouseEnvironment():
         if self.tstep >= 2880:
             self.terminal = True
         
-        return state, reward, temperature, self.terminal, tempDiff
+        return state, reward, temperature, self.terminal, tempNew
         
     

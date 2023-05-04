@@ -18,6 +18,7 @@ data = pd.read_csv(
 x_vars = [
     ('flow', 'TA01_GP101'),
     ('state', 'TA01_output'),
+    ('state', 'TA02_output'),
     ('temperatures', 'DC_GT101_GM101'),
     ('temperatures', 'DC_GT102_GM102'),
     ('temperatures', 'DC_GT103_GM103'),
@@ -55,6 +56,9 @@ data = data.dropna(how='any')
 # remove erroneous setpoints data
 data = data[data.setpoints.TA01_GT10X_GM10X != 0.0]
 
+# mash up to minute-based frequency
+data = data.groupby(['month', 'day', 'hour', 'minute'], sort=False).mean()
+
 ## GH TEMPERATURE
 # create "better" estimate of temperature var, w. proper avg.
 data[('temperatures', 'TA01_GT10X_GM10X')] = data.temperatures[[
@@ -67,12 +71,11 @@ data[('temperatures', 'TA01_GT10X_GM10X')] = data.temperatures[[
 ## DC TEMPERATURE
 # min-max scale [btween 0 and 1]
 col = ('temperatures', 'DC_GT401_GM401')
-col2 = ('temperatures', 'DC_GT401_GM401_scaled')
-data[col] = data[col].apply(lambda val: max(val, 30))
 data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
-# scale by fan output
-data[col2] = data[col] * data[('state', 'TA01_output')] / data[('state', 'TA01_output')].min()
+# min-max scale [btween 0 and 1]
+col = ('temperatures', 'TA01_GT401_GM401')
+data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
 
 ## OUTSIDE TEMP
 # min-max scale vals
@@ -93,6 +96,12 @@ data[('humidity', 'TA01_GT10X_GM10X')] = data.humidity[[
 # min-max scale vals
 col = ('humidity', 'TA01_GT10X_GM10X')
 data[col] = (data[col] - data[col].min()) / (data[col].max() - data[col].min())
+
+## FLOW
+col1 = ('state', 'TA01_output')
+col2 = ('state', 'TA02_output')
+data[col1] = (data[col1] - data[col1].min()) / (data[col1].max() - data[col1].min())
+data[col2] = (data[col2] - data[col2].min()) / (data[col2].max() - data[col2].min())
 
 ## GSI
 # min-max scale GSI
@@ -119,12 +128,12 @@ data[col2] = (data[col2] - data[col2].min()) / (data[col2].max() - data[col2].mi
 cols = [
     (('temperatures', 'TA01_GT10X_GM10X'), 3),
     (('temperatures', 'DC_GT401_GM401'), 2),
-    (('temperatures', 'DC_GT401_GM401_scaled'), 2),
+    (('temperatures', 'TA01_GT401_GM401'), 3),
     (('temperatures', 'DC_GT301_damped'), 4),
     (('humidity', 'TA01_GT10X_GM10X'), 3),
     # (('sun', 'gsi_deriv'), 3),
-    (('wind', 'Wx'), 3),
-    (('wind', 'Wy'), 3),
+    # (('wind', 'Wx'), 3),
+    # (('wind', 'Wy'), 3),
     
 ]
 
@@ -169,19 +178,18 @@ n_steps = 60   # 60-min backwards look
 
 # Define model variables
 model_vars = [
+    ('state', 'TA01_output'),
+    ('state', 'TA02_output'),
     ('temperatures', 'TA01_GT10X_GM10X'),
-    ('temperatures', 'DC_GT401_GM401_scaled'),
+    ('temperatures', 'DC_GT401_GM401'),
+    ('temperatures', 'TA01_GT401_GM401'),
     ('temperatures', 'DC_GT301_damped'),
     ('humidity', 'TA01_GT10X_GM10X'),
     ('sun', 'gsi'),
     ('sun', 'gsi_deriv'),
-    ('wind', 'Wx'),
-    ('wind', 'Wy'),
     ('time', 'minofday'),
     ('time', 'minofday_deriv'),
     ('setpoints', 'TA01_GT10X_GM10X'),
-    ('state', 'TA01_output'),
-    ('temperatures', 'DC_GT401_GM401')
 ]
 
 # get data
@@ -189,12 +197,12 @@ envData = data[model_vars].copy()
 
 # filter out incomplete days
 dayData = envData.groupby(['month', 'day']).count().state
-mask = dayData == 2880
+mask = dayData == 1440
 dayData = dayData[mask].dropna()
 idx = dayData.index.values.tolist()
 
 # filter envData by mask
-envData['dayCol'] = envData.index.droplevel(-1).droplevel(-1).droplevel(-1).values
+envData['dayCol'] = envData.index.droplevel(-1).droplevel(-1).values
 envData = envData[envData.dayCol.apply(lambda day: day in idx) == True]
 
 del envData['dayCol']
