@@ -1,13 +1,12 @@
 
-import tensorflow as tf
-from keras import layers, Model
+import numpy as np
 
 class kalmanFilter():
     
     def __init__(self):
         
         # init hyperparams
-        self.Q = 1e-5
+        self.Q = 1e-4
         self.R = 0.1**3
         
         # init measurements
@@ -17,10 +16,10 @@ class kalmanFilter():
         self.p_pre = 1
         self.K = 0
         
-    def reset(self):
+    def reset(self, x):
         # reset all measurements
-        self.x = 20
-        self.x_pre = 20
+        self.x = x
+        self.x_pre = x
         self.p = 1
         self.p_pre = 1
         self.K = 0
@@ -36,3 +35,26 @@ class kalmanFilter():
         self.p = (1 - self.k) * self.p_pre
         
         return self.x
+
+class OUProcess():
+    """
+    DOCUMENTATION
+    """
+    def __init__(self, theta, mu, sigma, dt):
+        """
+        DOCUMENTATION
+        """
+        self.theta = theta
+        self.mu = mu
+        self.sigma = sigma
+        self.dt = dt
+        self.X = 0
+        
+    def sample(self):
+        """
+        DOCUMENTATION
+        """
+        X = self.X + self.theta * (self.mu - self.X) * self.dt \
+            + self.sigma * np.sqrt(self.dt) * np.random.normal()
+        self.X = X
+        return X
