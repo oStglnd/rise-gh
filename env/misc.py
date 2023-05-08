@@ -37,13 +37,7 @@ class kalmanFilter():
         return self.x
 
 class OUProcess():
-    """
-    DOCUMENTATION
-    """
     def __init__(self, theta, mu, sigma, dt):
-        """
-        DOCUMENTATION
-        """
         self.theta = theta
         self.mu = mu
         self.sigma = sigma
@@ -51,9 +45,6 @@ class OUProcess():
         self.X = 0
         
     def sample(self):
-        """
-        DOCUMENTATION
-        """
         X = self.X + self.theta * (self.mu - self.X) * self.dt \
             + self.sigma * np.sqrt(self.dt) * np.random.normal()
         self.X = X

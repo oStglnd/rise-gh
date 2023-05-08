@@ -1,7 +1,8 @@
 data/sensors
-data/OLD
+data/old
 data/SMHI/*
 data/*.csv
+data/
 scripts/old
 model/old
 model/saved

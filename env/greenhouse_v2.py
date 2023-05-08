@@ -69,6 +69,9 @@ class greenhouseEnvironment():
         self.date = np.random.choice(self.dates)
         data = self.data.loc[self.date].copy()
         
+        # reset timestep
+        self.tstep = 0
+        
         # get sequences (w/o. output)
         seqVals = data[[
             ('temperatures', 'DC_GT401_GM401'),
@@ -183,4 +186,10 @@ class greenhouseEnvironment():
             state
         ))
         
-        return state, reward
+        if self.tstep == (1400 - self.n_steps):
+            terminal = True
+        else:
+            terminal = False
+            self.tstep += 1
+        
+        return state, reward, terminal
