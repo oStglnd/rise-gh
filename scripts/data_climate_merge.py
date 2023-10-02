@@ -39,6 +39,7 @@ data['time', 'monthofyear'] = weatherdata.time_moy
 data['time', 'minofday'] = weatherdata.time_mod
 data['time', 'minofday_deriv'] = weatherdata.time_mod_deriv
 data['time', 'hourofday'] = weatherdata.time_hod
+data['humidity', 'outdoor'] = weatherdata.humidity
 
 # RE-sort columns by primary key
 data = data.reindex(

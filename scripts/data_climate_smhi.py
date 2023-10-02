@@ -64,6 +64,7 @@ dates = pd.date_range(
 
 # interpolate missing vals
 data = data.ffill()
+data = data.bfill()
 
 # remove date from data
 data.set_index('date', drop=True, inplace=True)
