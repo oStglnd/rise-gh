@@ -9,5 +9,6 @@ model/saved
 model/results
 model/kfold_results
 model/.ipynb_checkpoints
+old/
 plotting/plots/
 #misc/specs.json
