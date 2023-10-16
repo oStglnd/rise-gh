@@ -33,7 +33,9 @@ periods = [
     'dec-feb',
     'feb-mar',
     'mar-apr',
-    'apr-may'
+    'apr-may',
+    'may-jul',
+    'aug-sep'
 ]
 
 for cat in catDict:

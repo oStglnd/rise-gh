@@ -6,16 +6,16 @@ from rnn import RNN
 
 # hyperparams
 m = 100
-k1 = 10
+k1 = 7
 k2 = 1
 T = 20
-lambd = 0.1
+lambd = 0.0
 sigma = 0
 eps = 0.0001
 
 seed = 1
 optimizer = None
-N = 1
+N = 20
 
 # model
 model = RNN(

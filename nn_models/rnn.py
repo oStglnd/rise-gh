@@ -1,6 +1,10 @@
 
 import numpy as np
 
+
+def sigmoid(x: np.array) -> np.array:
+    return np.exp(x) / (1 + np.exp(x))
+
 class RNN:
     def __init__(
             self,
@@ -44,8 +48,15 @@ class RNN:
         # init weight for concatenation layer
         self.weights['C'] = np.random.normal(
             loc=0, scale=2/np.sqrt(self.m),
-            size=(1, m + self.k2)
+            size=(1, self.m+self.k2)
         )
+        
+        # self.weights['C'][:, -self.k2:] = 1
+        
+        # # init bias for concatenation layer
+        # self.weights['c'] = np.zeros(
+        #     shape=(self.k2, 1)
+        # )
         
         # initialize hprev
         self.hprev = np.zeros(shape=(self.m, 1))
@@ -107,6 +118,18 @@ class RNN:
         
         Y = S @ self.weights['C'].T
         
+        
+        # if train:
+        #     X_c += np.random.normal(
+        #                 loc=0, scale=sigma,
+        #                 size=X_c.shape
+        #             )
+    
+    
+        # S = self.weights['C'] @ h_list[-1]# + self.weights['c']
+        # Y = X_c + S.T
+        
+        
         if train:
             self.hprev = h_list[1:]
             return a_list, h_list, S, Y
@@ -122,6 +145,7 @@ class RNN:
             lambd: float
         ) -> dict:
         
+        
         # obtain predicted vals
         a_list, h_list, S, Y_hat = self.predict(
             X_t=X_t, 
@@ -133,11 +157,15 @@ class RNN:
         # get batch size
         N = len(X_t)
         
-        # obtain initial gradient
+        # # obtain initial gradient
+        # G = 2 * (Y_hat - Y).T @ S * (1 - S)
         G = 2 * (Y_hat - Y)
         
-        # compute grads for concatenation/output layer
-        C_grads = np.mean(G * S, axis=0) + 2 * lambd * self.weights['C']
+        # # compute grads for concatenation/output layer
+        C_grads = np.mean(G * S, axis=0)  + 2 * lambd * self.weights['C']
+        # C_grads[:, -self.k2:] = 0
+        # C_grads = np.mean(h_list[-1] * G.T, axis=1) + 2 * lambd * self.weights['C']
+        #c_grads = np.mean(G, axis=0)
         
         # compute remaining gradients by BPTT
         H_grad = G @ self.weights['C'][:, :self.m]
@@ -161,7 +189,8 @@ class RNN:
             'U':U_grads,
             'W':W_grads,
             'b':b_grads,
-            'C':C_grads
+            'C':C_grads,
+            #'c':c_grads
         }
         
         return grads
