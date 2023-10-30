@@ -2,32 +2,174 @@
 
 import numpy as np
 
+class neuralNetwork:
+    def __init__(
+            self,
+        ):
+        
+        # init optimizer
+        self.optimizer = None
+        
+        # init weights
+        self.weights = {}
+    
+    def predict(
+            self, 
+            X_t: np.array,
+            X_c: np.array,
+            train: bool,
+            sigma: float = 0,
+            ) -> np.array:
+        """
+        ...
+        """
+        return 0
+        
+    def compute_grads(
+            self,
+            X_t: np.array,
+            X_c: np.array,
+            Y: np.array,
+            sigma: float,
+            lambd: float
+        ) -> dict:
+        """
+        ...
+        """
+        grads = {}
+        return grads
+    
+    def compute_grads_numerical(
+            self, 
+            X_t: np.array, 
+            X_c: np.array,
+            Y: np.array, 
+            sigma: float,
+            lambd: float,
+            eps: float,
+        ) -> np.array:
+        """
+        ...
+        """
+        
+        # save initial weights
+        grads_dict = {}
 
-
-
-class recurrentNeuralNetwork:
+        for name, weight in self.weights.items():
+            shape = weight.shape
+            w_perturb = np.zeros(shape)
+            w_gradsNum = np.zeros(shape)
+            w_0 = weight.copy()
+            
+            for i in range(min(shape[0], 10)):#shape[0]):
+                for j in range(min(shape[1], 10)):#shape[1]):
+            
+                    # add perturbation
+                    w_perturb[i, j] = eps
+                    
+                    # perturb weight vector negatively
+                    # and compute cost
+                    w_tmp = w_0 - w_perturb
+                    self.weights[name] = w_tmp
+                    loss1 = self.compute_loss(X_t, X_c, Y, lambd)
+                
+                    # perturb weight vector positively
+                    # and compute cost
+                    w_tmp = w_0 + w_perturb
+                    self.weights[name] = w_tmp
+                    loss2 = self.compute_loss(X_t, X_c, Y, lambd)
+                    lossDiff = (loss2 - loss1) / (2 * eps)
+                    
+                    # get numerical grad f. W[i, j]
+                    w_gradsNum[i, j] = lossDiff
+                    w_perturb[i, j] = 0
+        
+            # save grads
+            grads_dict[name] = w_gradsNum
+            
+            # reset weigth vector
+            self.weights[name] = w_0
+            
+        return grads_dict
+    
+    def compute_loss(
+            self,
+            X_t: np.array,
+            X_c: np.array,
+            Y: np.array,
+            lambd: float
+            ) -> float:
+        """
+        ...
+        """
+        Y_hat, _ = self.predict(
+            X_t=X_t, 
+            X_c=X_c, 
+            train=False
+        )
+        
+        loss = np.square(Y - Y_hat).mean()
+        
+        for key, weights in self.weights.items():
+            loss += lambd * np.sum(np.square(weights))
+            
+        return loss
+    
+    def train(
+            self,
+            X_t: np.array,
+            X_c: np.array, 
+            Y: np.array,
+            sigma: float,
+            lambd: float, 
+            eta: float,
+            t: int = None
+        ) -> None:
+        """
+        ...
+        """
+        
+        grads = self.compute_grads(
+            X_t, 
+            X_c, 
+            Y, 
+            sigma, 
+            lambd
+        )
+        
+        for key, weight in self.weights.items():
+            # clip gradient
+            grads[key] = np.clip(grads[key], -2, 2)
+            
+            # get update
+            if t is None:
+                step_update = self.optimizer.step(key, grads[key])
+            else:
+                step_update = self.optimizer.step(key, grads[key], t)
+            
+            # update weight
+            weight -= eta * step_update
+        
+class recurrentNeuralNetwork(neuralNetwork):
     def __init__(
             self,
             m: int,
             k1: int,
             k2: int,
-            T: int,
-            seed: int,
-            optimizer: str
+            seed: int
             ):
         
-        # init weight dims
-        self.m = m     # dimensionality of recurrent layer
-        self.k1 = k1   # number of recurrent inputs
-        self.k2 = k2   # number of non-recurrent inputs
-        self.T = T     # length of sequence
+        # init super class
+        super().__init__()
+        
+        # init weight params
+        self.k1 = k1
+        self.k2 = k2
+        self.m = m
         
         # set seed
         self.seed = seed
         np.random.seed(seed)
-        
-        # init weight dict
-        self.weights = {}
         
         # init bias for recurrent layer
         self.weights['b'] = np.zeros(
@@ -51,18 +193,9 @@ class recurrentNeuralNetwork:
             size=(1, self.m+self.k2)
         )
         
-        # self.weights['C'][:, -self.k2:] = 1
-        
-        # # init bias for concatenation layer
-        # self.weights['c'] = np.zeros(
-        #     shape=(1, 1)
-        # )
-        
         # initialize hprev
         self.hprev = np.zeros(shape=(self.m, 1))
         
-        # init optimizer
-        self.optimizer = None
         
     def predict(
             self, 
@@ -116,19 +249,7 @@ class recurrentNeuralNetwork:
                 X_c
             ))
         
-        Y = S @ self.weights['C'].T #+ self.weights['c']
-        
-        
-        # if train:
-        #     X_c += np.random.normal(
-        #                 loc=0, scale=sigma,
-        #                 size=X_c.shape
-        #             )
-    
-    
-        # S = self.weights['C'] @ h_list[-1]# + self.weights['c']
-        # Y = X_c + S.T
-        
+        Y = S @ self.weights['C'].T
         
         if train:
             self.hprev = h_list[1:]
@@ -158,14 +279,10 @@ class recurrentNeuralNetwork:
         N = len(X_t)
         
         # # obtain initial gradient
-        # G = 2 * (Y_hat - Y).T @ S * (1 - S)
         G = 2 * (Y_hat - Y)
         
         # # compute grads for concatenation/output layer
         C_grads = np.mean(G * S, axis=0)  + 2 * lambd * self.weights['C']
-        # C_grads[:, -self.k2:] = 0
-        # C_grads = np.mean(h_list[-1] * G.T, axis=1) + 2 * lambd * self.weights['C']
-        # c_grads = np.mean(G, axis=0)
         
         # compute remaining gradients by BPTT
         H_grad = G @ self.weights['C'][:, :self.m]
@@ -190,95 +307,9 @@ class recurrentNeuralNetwork:
             'W':W_grads,
             'b':b_grads,
             'C':C_grads,
-            # 'c':c_grads
         }
         
         return grads
-    
-    def compute_grads_numerical(
-            self, 
-            X_t: np.array, 
-            X_c: np.array,
-            Y: np.array, 
-            sigma: float,
-            lambd: float,
-            eps: float,
-        ) -> np.array:
-        """
-        Parameters
-        ----------
-        X : Nxd data matrix
-        Y : NxK one-hot encoded label matrix
-        lambd: regularization parameter
-        eps: epsilon for incremental derivative calc.
-        
-        Returns
-        -------
-        W_gradsNum : numerically calculated gradients for weight martix (W)
-        b_gradsNum : numerically calculated gradients for bias matrix (b)
-        """
-
-        # save initial weights
-        gradsDict = {}
-
-        for name, weight in self.weights.items():
-            shape = weight.shape
-            w_perturb = np.zeros(shape)
-            w_gradsNum = np.zeros(shape)
-            w_0 = weight.copy()
-            
-            for i in range(min(shape[0], 10)):#shape[0]):
-                for j in range(min(shape[1], 10)):#shape[1]):
-            
-                    # add perturbation
-                    w_perturb[i, j] = eps
-                    
-                    # perturb weight vector negatively
-                    # and compute cost
-                    w_tmp = w_0 - w_perturb
-                    self.weights[name] = w_tmp
-                    loss1 = self.compute_loss(X_t, X_c, Y, lambd)
-                
-                    # perturb weight vector positively
-                    # and compute cost
-                    w_tmp = w_0 + w_perturb
-                    self.weights[name] = w_tmp
-                    loss2 = self.compute_loss(X_t, X_c, Y, lambd)
-                    lossDiff = (loss2 - loss1) / (2 * eps)
-                    
-                    # get numerical grad f. W[i, j]
-                    w_gradsNum[i, j] = lossDiff
-                    w_perturb[i, j] = 0
-        
-            # save grads
-            gradsDict[name] = w_gradsNum
-            
-            # reset weigth vector
-            self.weights[name] = w_0
-            
-        return gradsDict
-    
-    def compute_loss(
-            self,
-            X_t: np.array,
-            X_c: np.array,
-            Y: np.array,
-            lambd: float
-            ) -> float:
-        
-        Y_hat, _ = self.predict(
-            X_t=X_t, 
-            X_c=X_c, 
-            train=False
-        )
-        
-        loss = np.square(Y - Y_hat).mean()
-        
-        for key, weights in self.weights.items():
-            # if key.isupper():
-            loss += lambd * np.sum(np.square(weights))
-            
-        return loss
     
     def train(
             self,
@@ -313,32 +344,33 @@ class recurrentNeuralNetwork:
             weight -= eta * step_update
             
             
-class feeedForwardNeuralNetwork:
+class feedForwardNeuralNetwork(neuralNetwork):
     def __init__(
             self, 
             k1: int,
             k2: int,
             m: list,
-            initialization: str,
-            optimizer: str,
             seed: int
         ):
+        # init super class
+        super().__init__()
         
-        # init seed
-        np.random.seed(seed)
-        
-        # init weight dims
+        # init weight params
         self.k1 = k1
         self.k2 = k2
         self.m = m
+        
+        # set seed
+        self.seed = seed
+        np.random.seed(seed)
+        
+        # save n layers
         self.n_layers = len(m)
         
         # init weight dims list
         weight_list = [k1] + m
-        self.layers = []
         
         # init weight dict
-        self.weights = {}
         for idx, (m1, m2) in enumerate(zip(weight_list[:-1], weight_list[1:])):
             scale = np.sqrt(2/m1)
             self.weights['W'+str(idx)] = np.random.normal(
@@ -351,31 +383,10 @@ class feeedForwardNeuralNetwork:
 
         # init weight for concatenation layer
         self.weights['C'] = np.random.normal(
-            loc=0, scale=np.sqrt(2/(self.m[-1]+self.k2)),
-            size=(1, self.m[-1]+self.k2)
+            loc=0, scale=np.sqrt(2/(m[-1]+self.k2)),
+            size=(1, m[-1]+self.k2)
         )
-            
-        
-        # for m1, m2 in zip(weightList[:-1], weightList[1:]):
-        #     layer = {}
-            
-        #     scale = np.sqrt(2/m1)
-        #     layer['W'] = np.random.normal(
-        #             loc=0, 
-        #             scale=scale, 
-        #             size=(m2, m1)
-        #     )
-            
-        #     layer['b'] = np.zeros(shape=(m2, 1))
-            
-        #     self.layers.append(layer)
-        
-        
-        # self.weights['C'] = 
-        
-        # init optimizer
-        self.optimizer = None
-     
+                 
     def predict(
             self, 
             X_t: np.array,
@@ -384,22 +395,13 @@ class feeedForwardNeuralNetwork:
             sigma: float = None,
         ) -> np.array:
         """
-        Parameters
-        ----------
-        X : Nxd data matrix
-
-        Returns
-        -------
-        P : KxN score matrix w. softmax activation
+        ...
         """
         h_list = [X_t.T.copy()]
         for l in range(self.n_layers):
             s = self.weights['W'+str(l)] @ h_list[-1] + self.weights['b'+str(l)]
             h = np.maximum(0, s)
             h_list.append(h)
-        
-        # s = self.weights['W'+str(l+1)] @ h_list[-1] + self.weights['b'+str(l+1)]
-        # h_list.append(s)
         
         if train:
             S = np.hstack((
@@ -421,28 +423,6 @@ class feeedForwardNeuralNetwork:
             return Y, h_list[-1]
         else:
             return Y, S, h_list
-        
-    def compute_loss(
-            self,
-            X_t: np.array,
-            X_c: np.array,
-            Y: np.array,
-            lambd: float
-            ) -> float:
-        
-        Y_hat, _ = self.predict(
-            X_t=X_t,
-            X_c=X_c,
-            train=False
-        )
-        
-        loss = np.square(Y - Y_hat).mean()     
-        
-        for key, weights in self.weights.items():
-            # if key.isupper():
-            loss += lambd * np.sum(np.square(weights))
-            
-        return loss
     
     def compute_grads(
             self, 
@@ -453,16 +433,7 @@ class feeedForwardNeuralNetwork:
             lambd: float
         ) -> (np.array, np.array):
         """
-        Parameters
-        ----------
-        X : Nxd data matrix
-        Y : NxK one-hot encoded label matrix
-        lambd: regularization parameter
-        
-        Returns
-        -------
-        W_grads : gradients for weight martix (W)
-        b_grads : gradients for bias matrix (b)
+        ...
         """
         # evaluate probabilities and calculate g
         Y_hat, S, h_list = self.predict(X_t, X_c, train=True, sigma=sigma)
@@ -502,117 +473,4 @@ class feeedForwardNeuralNetwork:
             h[h > 0] = 1
             G = self.weights['W'+str(l)].T @ G * h
         
-            
-        # for layer, h in zip(self.layers[::-1], hList[::-1]):
-        #     W_grads = N**-1 * G @ h.T + 2 * lambd * layer['W']
-        #     b_grads = N**-1 * np.sum(G, axis=1)
-        #     b_grads = np.expand_dims(b_grads, axis=1)
-            
-        #     # save grads
-        #     grads_list.append({
-        #         'W':W_grads,
-        #         'b':b_grads
-        #     })
-            
-        #     # propagate g
-        #     h[h > 0] = 1
-        #     G = layer['W'].T @ G * h
-        
         return grads
-
-    
-    def compute_grads_numerical(
-            self, 
-            X_t: np.array, 
-            X_c: np.array,
-            Y: np.array, 
-            sigma: float,
-            lambd: float,
-            eps: float,
-        ) -> np.array:
-        """
-        Parameters
-        ----------
-        X : Nxd data matrix
-        Y : NxK one-hot encoded label matrix
-        lambd: regularization parameter
-        eps: epsilon for incremental derivative calc.
-        
-        Returns
-        -------
-        W_gradsNum : numerically calculated gradients for weight martix (W)
-        b_gradsNum : numerically calculated gradients for bias matrix (b)
-        """
-
-        # save initial weights
-        gradsDict = {}
-
-        for name, weight in self.weights.items():
-            shape = weight.shape
-            w_perturb = np.zeros(shape)
-            w_gradsNum = np.zeros(shape)
-            w_0 = weight.copy()
-            
-            for i in range(min(shape[0], 10)):#shape[0]):
-                for j in range(min(shape[1], 10)):#shape[1]):
-            
-                    # add perturbation
-                    w_perturb[i, j] = eps
-                    
-                    # perturb weight vector negatively
-                    # and compute cost
-                    w_tmp = w_0 - w_perturb
-                    self.weights[name] = w_tmp
-                    loss1 = self.compute_loss(X_t, X_c, Y, lambd)
-                
-                    # perturb weight vector positively
-                    # and compute cost
-                    w_tmp = w_0 + w_perturb
-                    self.weights[name] = w_tmp
-                    loss2 = self.compute_loss(X_t, X_c, Y, lambd)
-                    lossDiff = (loss2 - loss1) / (2 * eps)
-                    
-                    # get numerical grad f. W[i, j]
-                    w_gradsNum[i, j] = lossDiff
-                    w_perturb[i, j] = 0
-        
-            # save grads
-            gradsDict[name] = w_gradsNum
-            
-            # reset weigth vector
-            self.weights[name] = w_0
-            
-        return gradsDict
-    
-    def train(
-            self, 
-            X_t: np.array, 
-            X_c: np.array,
-            Y: np.array, 
-            sigma: float,
-            lambd: float, 
-            eta: float,
-            t: int = None
-        ):
-        """
-        Parameters
-        ----------
-        X : Nxd data matrix
-        Y : NxK one-hot encoded label matrix
-        lambd: regularization parameter
-        eta: learning rate
-        """
-        # get grads from self.computeGrads and update weights
-        # w. GD and learning parameter eta
-        grads = self.compute_grads(X_t, X_c, Y, sigma, lambd)
-        
-        for key, weight in self.weights.items():
-            # get update
-            if t is None:
-                step_update = self.optimizer.step(key, grads[key])
-            else:
-                step_update = self.optimizer.step(key, grads[key], t)
-            
-            # update weight
-            weight -= eta * step_update
-        

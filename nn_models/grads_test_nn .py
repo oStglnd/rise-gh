@@ -1,8 +1,9 @@
 
 import numpy as np
 
-from nn import neuralNetwork
-
+#from nn import neuralNetwork
+from networks import feedForwardNeuralNetwork
+#from opts import AdaGrad
 
 # hyperparams
 K = 1
@@ -19,12 +20,10 @@ optimizer = None
 N = 20
 
 # model
-model = neuralNetwork(
+model = feedForwardNeuralNetwork(
     k1=k1,
     k2=k2,
     m=m,
-    initialization='He',
-    optimizer=optimizer,
     seed=seed
 )
 

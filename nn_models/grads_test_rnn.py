@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from rnn import RNN
+from networks import recurrentNeuralNetwork
 
 
 # hyperparams
@@ -18,13 +18,11 @@ optimizer = None
 N = 20
 
 # model
-model = RNN(
+model = recurrentNeuralNetwork(
     m,
     k1,
     k2,
-    T,
     seed,
-    optimizer
 )
 
 # get fake data, (N x T x D)
