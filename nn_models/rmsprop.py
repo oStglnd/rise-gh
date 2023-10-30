@@ -12,9 +12,6 @@ class RMSProp:
         self.beta = beta
         self.eps = eps
         
-        # init param
-        self.init = False
-        
         # init moments
         self.m = {}
         self.v = {}
@@ -28,12 +25,7 @@ class RMSProp:
             grad: np.array
         ) -> np.array:
         
-        if self.init:
-            new_moment = self.beta * moment + (1 - self.beta) * np.square(grad)
-        else:
-            new_moment = np.square(grad)
-            self.init = True
-        
+        new_moment = self.beta * moment + (1 - self.beta) * np.square(grad)
         return new_moment
     
     def step(

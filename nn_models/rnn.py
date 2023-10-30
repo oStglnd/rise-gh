@@ -36,18 +36,18 @@ class RNN:
         
         # init weights for recurrent layer
         self.weights['U'] = np.random.normal(
-            loc=0, scale=2/np.sqrt(m), 
+            loc=0, scale=np.sqrt(2/m), 
             size=(self.m, self.k1)
         )
         
         self.weights['W'] = np.random.normal(
-            loc=0, scale=2/np.sqrt(m), 
+            loc=0, scale=np.sqrt(2/m), 
             size=(self.m, self.m)
         )
         
         # init weight for concatenation layer
         self.weights['C'] = np.random.normal(
-            loc=0, scale=2/np.sqrt(self.m),
+            loc=0, scale=np.sqrt(2/self.m),
             size=(1, self.m+self.k2)
         )
         
@@ -55,7 +55,7 @@ class RNN:
         
         # # init bias for concatenation layer
         # self.weights['c'] = np.zeros(
-        #     shape=(self.k2, 1)
+        #     shape=(1, 1)
         # )
         
         # initialize hprev
@@ -116,7 +116,7 @@ class RNN:
                 X_c
             ))
         
-        Y = S @ self.weights['C'].T
+        Y = S @ self.weights['C'].T #+ self.weights['c']
         
         
         # if train:
@@ -165,7 +165,7 @@ class RNN:
         C_grads = np.mean(G * S, axis=0)  + 2 * lambd * self.weights['C']
         # C_grads[:, -self.k2:] = 0
         # C_grads = np.mean(h_list[-1] * G.T, axis=1) + 2 * lambd * self.weights['C']
-        #c_grads = np.mean(G, axis=0)
+        # c_grads = np.mean(G, axis=0)
         
         # compute remaining gradients by BPTT
         H_grad = G @ self.weights['C'][:, :self.m]
@@ -190,7 +190,7 @@ class RNN:
             'W':W_grads,
             'b':b_grads,
             'C':C_grads,
-            #'c':c_grads
+            # 'c':c_grads
         }
         
         return grads
@@ -274,7 +274,8 @@ class RNN:
         
         loss = np.square(Y - Y_hat).mean()
         
-        for _, weights in self.weights.items():
+        for key, weights in self.weights.items():
+            # if key.isupper():
             loss += lambd * np.sum(np.square(weights))
             
         return loss
@@ -286,7 +287,8 @@ class RNN:
             Y: np.array,
             sigma: float,
             lambd: float, 
-            eta: float
+            eta: float,
+            t: int = None
         ) -> None:
         
         grads = self.compute_grads(
@@ -299,10 +301,13 @@ class RNN:
         
         for key, weight in self.weights.items():
             # clip gradient
-            grads[key] = np.clip(grads[key], -2, 2)
+            grads[key] = np.clip(grads[key], -5, 5)
             
             # get update
-            step_update = self.optimizer.step(key, grads[key])
+            if t is None:
+                step_update = self.optimizer.step(key, grads[key])
+            else:
+                step_update = self.optimizer.step(key, grads[key], t)
             
             # update weight
             weight -= eta * step_update
