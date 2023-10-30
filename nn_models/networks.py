@@ -21,7 +21,7 @@ class neuralNetwork:
             sigma: float = 0,
             ) -> np.array:
         """
-        ...
+        Init. prediction function
         """
         return 0
         
@@ -34,7 +34,7 @@ class neuralNetwork:
             lambd: float
         ) -> dict:
         """
-        ...
+        Init. gradient computations
         """
         grads = {}
         return grads
@@ -49,18 +49,21 @@ class neuralNetwork:
             eps: float,
         ) -> np.array:
         """
-        ...
+        Numerical gradient computations for checking analytical gradients
         """
         
         # save initial weights
         grads_dict = {}
 
+        # iterate over all weights in network
         for name, weight in self.weights.items():
+            
             shape = weight.shape
             w_perturb = np.zeros(shape)
             w_gradsNum = np.zeros(shape)
             w_0 = weight.copy()
             
+            # iterate over elements in weight matrix
             for i in range(min(shape[0], 10)):#shape[0]):
                 for j in range(min(shape[1], 10)):#shape[1]):
             
@@ -68,13 +71,13 @@ class neuralNetwork:
                     w_perturb[i, j] = eps
                     
                     # perturb weight vector negatively
-                    # and compute cost
+                    # and compute loss
                     w_tmp = w_0 - w_perturb
                     self.weights[name] = w_tmp
                     loss1 = self.compute_loss(X_t, X_c, Y, lambd)
                 
                     # perturb weight vector positively
-                    # and compute cost
+                    # and compute loss
                     w_tmp = w_0 + w_perturb
                     self.weights[name] = w_tmp
                     loss2 = self.compute_loss(X_t, X_c, Y, lambd)
@@ -100,16 +103,20 @@ class neuralNetwork:
             lambd: float
             ) -> float:
         """
-        ...
+        Computation of mean squared error loss w. L2 regularization
         """
+        
+        # get predictions for batch
         Y_hat, _ = self.predict(
             X_t=X_t, 
             X_c=X_c, 
             train=False
         )
         
+        # compute mean squared error loss
         loss = np.square(Y - Y_hat).mean()
         
+        # add regularization terms, iterating over all weights
         for key, weights in self.weights.items():
             loss += lambd * np.sum(np.square(weights))
             
@@ -126,9 +133,12 @@ class neuralNetwork:
             t: int = None
         ) -> None:
         """
-        ...
+        Mini-batch gradient descent. First compute grads for network, given
+        Gaussian distortion to X_c (w. s.d. sigma), regularization parameter
+        lambd, and learning rate eta.
         """
         
+        # compute grads f. network, returned as dictionary w. weight keys
         grads = self.compute_grads(
             X_t, 
             X_c, 
@@ -137,11 +147,12 @@ class neuralNetwork:
             lambd
         )
         
+        # iterate over all weights in network
         for key, weight in self.weights.items():
             # clip gradient
             grads[key] = np.clip(grads[key], -2, 2)
             
-            # get update
+            # get update given optimizer (e.g. AdaGrad)
             if t is None:
                 step_update = self.optimizer.step(key, grads[key])
             else:
@@ -158,7 +169,20 @@ class recurrentNeuralNetwork(neuralNetwork):
             k2: int,
             seed: int
             ):
+        """
+        Neural network w. recurrent component and concatenation layer.
         
+        Parameters
+        ----------
+        m : int
+            Weight dimension in recurrent component
+        k_1 : 
+            Dimensionality of recurrent inputs
+        k_2 :
+            Dimensionality of non-recurrent inputs
+        seed : 
+            Random seed f. weigth initialization
+        """
         # init super class
         super().__init__()
         
@@ -228,13 +252,19 @@ class recurrentNeuralNetwork(neuralNetwork):
         h_list = [self.hprev.copy()]
         a_list = []        
         
+        # iterate over sequence (temporally over recurrent inputs)
         for x_t in X_t.transpose((1, 0, 2)):
+            # get initial activation
             a = self.weights['W'] @ h_list[-1] + self.weights['U'] @ x_t.T + self.weights['b']
+            
+            # pass through non-linearity
             h = np.tanh(a)
             
+            # save activations and hidden units
             a_list.append(a)
             h_list.append(h)
             
+        # if train, add noise to non-recurrent inputs
         if train:
             S = np.hstack((
                 h_list[-1].T,
@@ -249,6 +279,7 @@ class recurrentNeuralNetwork(neuralNetwork):
                 X_c
             ))
         
+        # concatenate non-recurrent inputs w. dense representation
         Y = S @ self.weights['C'].T
         
         if train:
@@ -265,7 +296,10 @@ class recurrentNeuralNetwork(neuralNetwork):
             sigma: float,
             lambd: float
         ) -> dict:
-        
+        """
+        Compute all gradients for network w. concatenation and recurrent
+        component.
+        """
         
         # obtain predicted vals
         a_list, h_list, S, Y_hat = self.predict(
@@ -310,38 +344,6 @@ class recurrentNeuralNetwork(neuralNetwork):
         }
         
         return grads
-    
-    def train(
-            self,
-            X_t: np.array,
-            X_c: np.array, 
-            Y: np.array,
-            sigma: float,
-            lambd: float, 
-            eta: float,
-            t: int = None
-        ) -> None:
-        
-        grads = self.compute_grads(
-            X_t, 
-            X_c, 
-            Y, 
-            sigma, 
-            lambd
-        )
-        
-        for key, weight in self.weights.items():
-            # clip gradient
-            grads[key] = np.clip(grads[key], -5, 5)
-            
-            # get update
-            if t is None:
-                step_update = self.optimizer.step(key, grads[key])
-            else:
-                step_update = self.optimizer.step(key, grads[key], t)
-            
-            # update weight
-            weight -= eta * step_update
             
             
 class feedForwardNeuralNetwork(neuralNetwork):
@@ -352,6 +354,21 @@ class feedForwardNeuralNetwork(neuralNetwork):
             m: list,
             seed: int
         ):
+        """
+        Neural network w. feed-forward component and concatenation layer.
+        
+        Parameters
+        ----------
+        m : int
+            Weight dimension in recurrent component
+        k_1 : 
+            Dimensionality of recurrent inputs
+        k_2 :
+            Dimensionality of non-recurrent inputs
+        seed : 
+            Random seed f. weigth initialization
+        """
+        
         # init super class
         super().__init__()
         
@@ -395,14 +412,19 @@ class feedForwardNeuralNetwork(neuralNetwork):
             sigma: float = None,
         ) -> np.array:
         """
-        ...
+        Forward pass with feed-forward network component.
         """
+        
+        # init list w. activations
         h_list = [X_t.T.copy()]
+        
+        # iterate over all layers and compute forward pass
         for l in range(self.n_layers):
             s = self.weights['W'+str(l)] @ h_list[-1] + self.weights['b'+str(l)]
             h = np.maximum(0, s)
             h_list.append(h)
         
+        # if training, add noise to non-recurrent input
         if train:
             S = np.hstack((
                 h_list[-1].T,
@@ -417,7 +439,8 @@ class feedForwardNeuralNetwork(neuralNetwork):
                 X_c
             ))
         
-        Y = S @ self.weights['C'].T #+ self.weights['c']
+        # concatenate direct inputs and feed-forward representation
+        Y = S @ self.weights['C'].T
         
         if not train:
             return Y, h_list[-1]
@@ -433,9 +456,11 @@ class feedForwardNeuralNetwork(neuralNetwork):
             lambd: float
         ) -> (np.array, np.array):
         """
-        ...
+        Compute all gradients for network w. concatenation and feed-forward
+        component.
         """
-        # evaluate probabilities and calculate g
+        
+        # perform forward pass and get all activations
         Y_hat, S, h_list = self.predict(X_t, X_c, train=True, sigma=sigma)
         
         # get batch size
@@ -453,6 +478,8 @@ class feedForwardNeuralNetwork(neuralNetwork):
         
         # propagate G
         G = (G @ self.weights['C'][:, :self.m[-1]]).T
+        
+        # add outer derivative for initial backprop step
         h = h_list[-1].copy()
         h[h>0] = 1
         G = G * h
@@ -461,15 +488,16 @@ class feedForwardNeuralNetwork(neuralNetwork):
         for l in range(self.n_layers)[::-1]:
             h = h_list[l].copy()
             
+            # compute grads
             W_grads = N**-1 * G @ h.T + 2 * lambd * self.weights['W'+str(l)]
             b_grads = N**-1 * np.sum(G, axis=1)
             b_grads = np.expand_dims(b_grads, axis=1)
             
+            # save grads
             grads['W'+str(l)] = W_grads
             grads['b'+str(l)] = b_grads
             
-            # propagate g
-            
+            # propagate g 
             h[h > 0] = 1
             G = self.weights['W'+str(l)].T @ G * h
         
