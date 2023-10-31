@@ -1,5 +1,4 @@
 
-import os
 import pandas as pd
 import numpy as np
 
@@ -12,7 +11,7 @@ def data_reduce(data, m):
         data.index.get_level_values(2),
         data.index.get_level_values(3) // m
     )
-
+    
     index = pd.MultiIndex.from_tuples(
         tuples=idxObj,
         names=['month', 'day', 'hour', 'minute']
@@ -58,7 +57,7 @@ def seq_maker(data, targets, temps, dates, t_steps, n_steps):
     return sequences, targets, temps, temps_t, dates
 
 # define func f. data normalization
-def data_norm(data_train, data_test, data_val):
+def data_norm(data_train, data_test, data_val=None):
     col_params = {}
     for col in data_train.columns:
 
@@ -71,7 +70,9 @@ def data_norm(data_train, data_test, data_val):
 
         data_train[col] = (data_train[col] - mean) / std
         data_test[col] = (data_test[col] - mean) / std
-        data_val[col] = (data_val[col] - mean) / std
+        
+        if data_val is not None:
+            data_val[col] = (data_val[col] - mean) / std
 
         col_params[col] = {
             'mean':mean,
@@ -83,6 +84,72 @@ def data_norm(data_train, data_test, data_val):
     return data_train, data_test, data_val, col_params
 
 def k_fold_data(data, k_idx, k_frac, m, cols, t_steps, n_steps, setpoint, shuffle):
+    
+    # get days
+    days = data.groupby(['month', 'day'], sort=False).count().index.values
+    
+    # get days for K:th fold
+    # train_n = int(len(days) * (1 - k_frac))
+    # test_n = len(days) - train_n
+    test_n = int(len(days) * k_frac)
+    
+    # split days by test and train
+    days_test = days[int(k_idx*test_n):int((k_idx+1)*test_n)].tolist()
+    mask_test = np.array([day in days_test for day in data.index.droplevel(-1).droplevel(-1).droplevel(-1).values])
+    data_train = data.loc[~mask_test].copy()
+    data_test = data.loc[mask_test].copy()
+    
+    # reduce to m-min observations
+    data_train, dates_train = data_reduce(data_train, m)
+    data_test, dates_test = data_reduce(data_test, m)
+
+    # remove setpoint
+    if setpoint:
+        data_train[('temperatures', 'TA01_GT10X_GM10X')] += 20 - data_train.setpoints.TA01_GT10X_GM10X
+        data_test[('temperatures', 'TA01_GT10X_GM10X')] += 20 - data_test.setpoints.TA01_GT10X_GM10X
+    
+    # filter data
+    data_train = data_train[cols].copy()
+    data_test = data_test[cols].copy()
+    
+    # normalize
+    data_train, data_test, _, col_params = data_norm(data_train, data_test)
+    
+    # get targets
+    targets_train = data_train.pop(('temperatures', 'TA01_GT10X_GM10X'))
+    targets_test = data_test.pop(('temperatures', 'TA01_GT10X_GM10X'))
+    
+    # get temp info
+    temps_train = targets_train.copy()
+    temps_test = targets_test.copy()
+    
+    # create sequences    
+    sequences_train, targets_train, temps_train, temps_t_train, dates_train = seq_maker(data_train, targets_train, temps_train, dates_train, t_steps, n_steps)
+    sequences_test, targets_test, temps_test, temps_t_test, dates_test = seq_maker(data_test, targets_test, temps_test, dates_test, t_steps, n_steps)
+    
+    # create MASKED sequences
+    sequences_masked = sequences_test.copy()
+    for t in range(1, t_steps):
+        sequences_masked[:, -t, :] = sequences_masked[:, -(t_steps), :]
+
+    # shuffle training data randomly
+    if shuffle:
+        idxs = np.arange(len(targets_train))
+        np.random.shuffle(idxs)
+
+        sequences_train = sequences_train[idxs]
+        targets_train = targets_train[idxs]
+        temps_train = temps_train[idxs]
+        temps_t_train = temps_t_train[idxs]
+        dates_train = dates_train[idxs]
+    
+    # return tups w. train and test
+    train_tup = (sequences_train, targets_train, temps_train, temps_t_train, dates_train)
+    test_tup = (sequences_test, targets_test, temps_test, temps_t_test, sequences_masked, dates_test)
+    
+    return train_tup, test_tup, col_params
+
+def k_fold_data_validation(data, k_idx, k_frac, m, cols, t_steps, n_steps, setpoint, shuffle):
     
     # get days
     days = data.groupby(['month', 'day'], sort=False).count().index.values

@@ -160,6 +160,7 @@ class neuralNetwork:
             
             # update weight
             weight -= eta * step_update
+            
         
 class recurrentNeuralNetwork(neuralNetwork):
     def __init__(
@@ -414,7 +415,6 @@ class feedForwardNeuralNetwork(neuralNetwork):
         """
         Forward pass with feed-forward network component.
         """
-        
         # init list w. activations
         h_list = [X_t.T.copy()]
         
