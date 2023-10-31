@@ -1,6 +1,7 @@
 
 import numpy as np
 import time
+from collections import deque
 
 def train_network(
         model,              # model
@@ -110,3 +111,28 @@ def train_network(
     }
     
     return results
+
+def test_autoreg(
+        model,
+        X_t: np.array,
+        X_c: np.array,
+        Y: np.array,
+        t_steps: int
+    ):
+    
+    preds = []
+    encodings = []
+    
+    pred_queue = deque(maxlen=t_steps)
+    for y in Y[:t_steps]:
+        pred_queue.append(y[np.newaxis, :])
+        preds.append(y)
+        
+    for (x_t, x_c) in zip(X_t, X_c):
+        y = pred_queue.popleft()
+        y_pred, encoded = model.predict(X_t=x_t[np.newaxis, :], X_c=x_c[np.newaxis, :], train=False)
+        pred_queue.append(y_pred)
+        preds.append(y_pred[0])
+        encodings.append(encoded[0])
+        
+    return preds, encodings
