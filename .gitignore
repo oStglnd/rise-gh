@@ -12,3 +12,5 @@ model/.ipynb_checkpoints
 old/
 plotting/plots/
 #misc/specs.json
+nn_models/old
+nn_models/results
