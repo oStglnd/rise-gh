@@ -179,5 +179,9 @@ data[('humidity', 'TA01_GT10X_GM10X_abs')] = data.humidity[[
     ('DC_GT104_GM104_abs')
 ]].values.mean(axis=1)
 
+
+### get thermal loss input
+data[('temperatures', 'TA01_GT10X_GM10X_loss')] = data.temperatures.TA01_GT10X_GM10X - data.temperatures.DC_GT301_damped
+
 # save as processed data
 data.to_csv(data_path + 'data_processed.csv')
