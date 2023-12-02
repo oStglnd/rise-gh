@@ -1,7 +1,3 @@
-data/sensors
-data/old
-data/SMHI/*
-data/*.csv
 data/
 scripts/old
 model/old
