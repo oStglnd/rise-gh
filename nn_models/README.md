@@ -33,3 +33,9 @@
  24. RNN - 32 units w. all AND humidity AND thermal loss.
  25. RNN - 32 units w. GSI + PHI + thermal loss
  26. RNN - 32 units w. ONLY PHI and GSI
+ 27. RNN - 32 units, w. +GSI+PHI, and 3 time steps.
+ 28. RNN - 32 units, w. +GSI+PHI, and 1 time steps,
+ 29. RNN - 32 units, w. +GSI+PHI, and 9 time steps
+ 30. RNN - 32 units, w. +GSI+PHI, and 12 time steps
+ 31. RNN - 32 units, w. +GSI+PHI, 1-min freq. & 15 backwards step
+ 31. GRU & LSTM - 32 units, w. GSI+PHI, 5-min freq and 3 steps.
