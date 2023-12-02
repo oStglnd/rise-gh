@@ -7,6 +7,7 @@ model/kfold_results
 model/.ipynb_checkpoints
 old/
 plotting/plots/
+scripts/old
 #misc/specs.json
 nn_models/old
 nn_models/results
