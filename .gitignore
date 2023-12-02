@@ -9,5 +9,6 @@ old/
 plotting/plots/
 scripts/old
 #misc/specs.json
+nn_models/.ipynb_checkpoints
 nn_models/old
 nn_models/results
